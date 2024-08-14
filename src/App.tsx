@@ -8,6 +8,22 @@ import { Parameter } from "./types";
 
 function App() {
 
+  const [showStatements, setShowStatements] = useState<boolean>(false);
+  const [showResult, setShowResult] = useState<boolean>(false);
+  const [selectedStatement, setSelectedStatement] = useState<"zero" | "one" | "two" | null>(null);
+
+  const rows_z_t = [
+              { id: 1, name: "mikoto2000", age: 11 },
+              { id: 2, name: "mikoto2001", age: 12 }
+            ];
+
+  const rows_o = [
+              { id: 1, name: "mikoto", age: 10 },
+              { id: 2, name: "mikoto2000", age: 11 },
+              { id: 3, name: "mikoto2001", age: 12 }
+            ];
+
+
   const [sql, setSql] = useState<string>("");
   const [parameters, setParameters] = useState<Parameter[]>([{ name: "", value: "" }]);
 
@@ -78,8 +94,21 @@ function App() {
         >
         </TextField>
         <Box className="controls">
-          <Button variant="outlined" >SQL 発行</Button>
-          <Button variant="outlined" >SELECT 文抽出</Button>
+          <Button
+            variant="outlined"
+            onClick={() => {
+              setShowResult(true);
+              setSelectedStatement("zero");
+            }}
+          >
+            SQL 発行
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={() => setShowStatements(true)}
+          >
+            SELECT 文抽出
+          </Button>
         </Box>
       </Box>
       <Divider sx={{ marginTop: "1em" }} />
@@ -87,7 +116,7 @@ function App() {
       <Grid container className="parameter-header">
         <Grid xs={5}>name</Grid>
         <Grid xs={5}>value</Grid>
-        <Grid xs={2}/>
+        <Grid xs={2} />
       </Grid>
       <Grid container className="parameter">
         {parameters.map((e, i) => <Grid container key={i} xs={12}>{createParameterRow(i, e)}</Grid>)}
@@ -105,21 +134,29 @@ function App() {
         </Grid>
       </Grid>
       <Divider sx={{ marginTop: "1em" }} />
-      <Typography>Select statements:</Typography>
-      <Stack>
-        <Link>{"select * from (select * from account where age >= #{age}) as a"}</Link>
-        <Link>{"select * from account where age >= #{age}"}</Link>
-      </Stack>
-      <Divider />
-      <Typography>Result:</Typography>
-      <DataGrid
-        columns={[{ field: "id" }, { field: "name" }, { field: "age" }]}
-        rows={[
-          { id: 1, name: "mikoto2000", age: 11 },
-          { id: 2, name: "mikoto2001", age: 12 }
-        ]}
-
-      />
+      {showStatements ?
+        <>
+          <Typography>Select statements:</Typography>
+          <Stack>
+            <Link onClick={() => setSelectedStatement("two")}>{"select * from (select * from account) as a  where age >= #{age};"}</Link>
+            <Link onClick={() => setSelectedStatement("one")}>{"select * from account"}</Link>
+          </Stack>
+          <Divider />
+        </>
+        :
+        <></>
+      }
+      {showResult ?
+        <>
+          <Typography>Result:</Typography>
+          <DataGrid
+            columns={[{ field: "id" }, { field: "name" }, { field: "age" }]}
+            rows={selectedStatement ? (selectedStatement === "one" ? rows_o : rows_z_t): []}
+          />
+        </>
+        :
+        <></>
+      }
     </>
   );
 }
