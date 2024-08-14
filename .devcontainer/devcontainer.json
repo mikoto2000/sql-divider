@@ -1,0 +1,21 @@
+{
+  "name": "Rust",
+  "image": "mikoto2000/tauri2:latest",
+  "remoteEnv": {
+    "DISPLAY": "${localEnv:DISPLAY}",
+    "WAYLAND_DISPLAY": "${localEnv:WAYLAND_DISPLAY}",
+    "XDG_RUNTIME_DIR": "${localEnv:XDG_RUNTIME_DIR}"
+  },
+  "mounts": [
+    {
+      "type": "bind",
+      "source": "/tmp/.X11-unix",
+      "target": "/tmp/.X11-unix"
+    },
+    {
+      "type": "bind",
+      "source": "/mnt/wslg",
+      "target": "/mnt/wslg"
+    }
+  ]
+}
