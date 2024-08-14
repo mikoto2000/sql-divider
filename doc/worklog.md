@@ -43,3 +43,9 @@ cargo add sqlx --features postgres,runtime-tokio
 npm install @mui/material @emotion/react @emotion/styled
 ```
 
+## SQL 発行結果を表示するための表を描画するためのコンポーネントを追加
+
+```sh
+npm i @mui/x-data-grid
+```
+
