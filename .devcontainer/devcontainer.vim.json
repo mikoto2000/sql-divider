@@ -3,7 +3,11 @@
     "EDITOR": "/vim --appimage-extract-and-run",
     "LESSCHARSET": "utf-8",
     "SHELL": "bash",
-    "TERM": "xterm-256color"
+    "TERM": "xterm-256color",
+    "DISPLAY": "${localEnv:DISPLAY}",
+    "WAYLAND_DISPLAY": "${localEnv:WAYLAND_DISPLAY}",
+    "XDG_RUNTIME_DIR": "${localEnv:XDG_RUNTIME_DIR}",
+    "PULSE_SERVER": "${localEnv:PULSE_SERVER}"
   },
   "mounts": [
     {
@@ -20,6 +24,16 @@
       "type": "bind",
       "source": "${localEnv:HOME}/.ssh",
       "target": "/home/node/.ssh"
+    },
+    {
+      "type": "bind",
+      "source": "/tmp/.X11-unix",
+      "target": "/tmp/.X11-unix"
+    },
+    {
+      "type": "bind",
+      "source": "/mnt/wslg",
+      "target": "/mnt/wslg"
     }
   ]
 }
