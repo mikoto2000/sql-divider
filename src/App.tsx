@@ -3,50 +3,40 @@ import reactLogo from "./assets/react.svg";
 import { invoke } from "@tauri-apps/api/core";
 import "./App.css";
 
-function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
+import { AppBar, Box, Button, Label, TextField, Typography } from "@mui/material";
+import Grid from '@mui/material/Unstable_Grid2';
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-    setGreetMsg(await invoke("greet", { name }));
-  }
+function App() {
 
   return (
-    <div className="container">
-      <h1>Welcome to Tauri!</h1>
-
-      <div className="row">
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-
-      <p>{greetMsg}</p>
-    </div>
+    <>
+    <AppBar position="static">SQL Divider</AppBar>
+    <Typography>SQL</Typography>
+    <Box className="sql">
+    <TextField
+      fullWidth
+      label="SQL"
+      placeholder="select * from user;"
+      multiline
+    >
+    </TextField>
+    <Box className="controls">
+    <Button variant="outlined" >SQL 発行</Button>
+    <Button variant="outlined" >SELECT 文抽出</Button>
+    </Box>
+    </Box>
+    <Typography>Parameter</Typography>
+    <Grid container className="parameter">
+    <Grid xs={6}>name</Grid>
+    <Grid xs={6}>value</Grid>
+    <Grid xs={5}><TextField xs={2}></TextField></Grid>
+    <Grid xs={5}><TextField xs={2}></TextField></Grid>
+    <Grid xs={2}></Grid>
+    <Grid xs={5}><TextField xs={2}></TextField></Grid>
+    <Grid xs={5}><TextField xs={2}></TextField></Grid>
+    <Grid xs={2}><Button variant="contained">追加</Button></Grid>
+    </Grid>
+    </>
   );
 }
 

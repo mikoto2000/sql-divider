@@ -29,11 +29,17 @@ npm notice
 
 # 依存関係追加
 
-SQL 発行
+## SQL 発行
 
 ```sh
 cargo add dotenv
 cargo add tokio --features full
 cargo add sqlx --features postgres,runtime-tokio
+```
+
+## UI コンポーネントフレームワーク追加
+
+```sh
+npm install @mui/material @emotion/react @emotion/styled
 ```
 
