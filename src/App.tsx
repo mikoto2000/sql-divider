@@ -5,6 +5,7 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { DataGrid } from '@mui/x-data-grid';
 import { useState } from "react";
 import { Parameter } from "./types";
+import { invoke } from "@tauri-apps/api/core";
 
 function App() {
 
@@ -13,15 +14,15 @@ function App() {
   const [selectedStatement, setSelectedStatement] = useState<"zero" | "one" | "two" | null>(null);
 
   const rows_z_t = [
-              { id: 1, name: "mikoto2000", age: 11 },
-              { id: 2, name: "mikoto2001", age: 12 }
-            ];
+    { id: 1, name: "mikoto2000", age: 11 },
+    { id: 2, name: "mikoto2001", age: 12 }
+  ];
 
   const rows_o = [
-              { id: 1, name: "mikoto", age: 10 },
-              { id: 2, name: "mikoto2000", age: 11 },
-              { id: 3, name: "mikoto2001", age: 12 }
-            ];
+    { id: 1, name: "mikoto", age: 10 },
+    { id: 2, name: "mikoto2000", age: 11 },
+    { id: 3, name: "mikoto2001", age: 12 }
+  ];
 
 
   const [sql, setSql] = useState<string>("");
@@ -96,7 +97,9 @@ function App() {
         <Box className="controls">
           <Button
             variant="outlined"
-            onClick={() => {
+            onClick={async () => {
+              const result = await invoke("query_command", { query: sql });
+              console.log(result);
               setShowResult(true);
               setSelectedStatement("zero");
             }}
@@ -105,12 +108,15 @@ function App() {
           </Button>
           <Button
             variant="outlined"
-            onClick={() => setShowStatements(true)}
+            onClick={async () => {
+              setShowStatements(true)
+            }
+            }
           >
             SELECT 文抽出
           </Button>
         </Box>
-      </Box>
+      </Box >
       <Divider sx={{ marginTop: "1em" }} />
       <Typography>Parameters:</Typography>
       <Grid container className="parameter-header">
@@ -134,28 +140,30 @@ function App() {
         </Grid>
       </Grid>
       <Divider sx={{ marginTop: "1em" }} />
-      {showStatements ?
-        <>
-          <Typography>Select statements:</Typography>
-          <Stack>
-            <Link onClick={() => setSelectedStatement("two")}>{"select * from (select * from account) as a  where age >= #{age};"}</Link>
-            <Link onClick={() => setSelectedStatement("one")}>{"select * from account"}</Link>
-          </Stack>
-          <Divider />
-        </>
-        :
-        <></>
+      {
+        showStatements ?
+          <>
+            <Typography>Select statements:</Typography>
+            <Stack>
+              <Link onClick={() => setSelectedStatement("two")}>{"select * from (select * from account) as a  where age >= #{age};"}</Link>
+              <Link onClick={() => setSelectedStatement("one")}>{"select * from account"}</Link>
+            </Stack>
+            <Divider />
+          </>
+          :
+          <></>
       }
-      {showResult ?
-        <>
-          <Typography>Result:</Typography>
-          <DataGrid
-            columns={[{ field: "id" }, { field: "name" }, { field: "age" }]}
-            rows={selectedStatement ? (selectedStatement === "one" ? rows_o : rows_z_t): []}
-          />
-        </>
-        :
-        <></>
+      {
+        showResult ?
+          <>
+            <Typography>Result:</Typography>
+            <DataGrid
+              columns={[{ field: "id" }, { field: "name" }, { field: "age" }]}
+              rows={selectedStatement ? (selectedStatement === "one" ? rows_o : rows_z_t) : []}
+            />
+          </>
+          :
+          <></>
       }
     </>
   );
