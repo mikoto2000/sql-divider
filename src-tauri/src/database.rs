@@ -1,6 +1,7 @@
 use std::{collections::HashMap, env, sync::Arc};
 
 use sqlx::Column;
+use sqlx::Error;
 use sqlx::Row;
 use sqlx::TypeInfo;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
@@ -19,13 +20,16 @@ pub async fn create_connection_pool() -> Pool<Postgres> {
         .unwrap()
 }
 
-pub async fn query(pool: &Arc<Mutex<Pool<Postgres>>>, query: String) -> Vec<HashMap<String, String>> {
+pub async fn query(
+    pool: &Arc<Mutex<Pool<Postgres>>>,
+    query: String,
+) -> Result<(Vec<crate::model::Column>, Vec<HashMap<String, String>>), Error> {
     let pool = pool.lock().await;
-    let query_result = sqlx::query(&query).fetch_all(&*pool).await.unwrap();
+    let mut query_result = sqlx::query(&query).fetch_all(&*pool).await?;
     drop(pool);
 
     let mut result: Vec<HashMap<String, String>> = vec![];
-    for row in query_result {
+    for row in &query_result {
         let mut map: HashMap<String, String> = HashMap::new();
 
         for column in row.columns() {
@@ -53,6 +57,15 @@ pub async fn query(pool: &Arc<Mutex<Pool<Postgres>>>, query: String) -> Vec<Hash
         println!()
     }
 
-    result
+    let mut columns: Vec<crate::model::Column> = vec![];
+    if query_result.len() > 0 {
+        for column in query_result[0].columns() {
+            columns.push(crate::model::Column {
+                ordinal: column.ordinal(),
+                name: column.name().to_string(),
+            });
+        }
+    }
 
+    Ok((columns, result))
 }

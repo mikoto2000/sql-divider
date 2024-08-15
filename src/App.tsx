@@ -4,7 +4,7 @@ import { AppBar, Box, Button, Divider, Link, Stack, TextField, Typography } from
 import Grid from '@mui/material/Unstable_Grid2';
 import { DataGrid } from '@mui/x-data-grid';
 import { useState } from "react";
-import { Parameter } from "./types";
+import { Column, Parameter } from "./types";
 import { Service } from "./services/Service";
 import { TauriService } from "./services/TauriService";
 
@@ -14,22 +14,13 @@ function App() {
 
   const [showStatements, setShowStatements] = useState<boolean>(false);
   const [showResult, setShowResult] = useState<boolean>(false);
-  const [selectedStatement, setSelectedStatement] = useState<"zero" | "one" | "two" | null>(null);
-
-  const rows_z_t = [
-    { id: 1, name: "mikoto2000", age: 11 },
-    { id: 2, name: "mikoto2001", age: 12 }
-  ];
-
-  const rows_o = [
-    { id: 1, name: "mikoto", age: 10 },
-    { id: 2, name: "mikoto2000", age: 11 },
-    { id: 3, name: "mikoto2001", age: 12 }
-  ];
-
 
   const [sql, setSql] = useState<string>("");
   const [parameters, setParameters] = useState<Parameter[]>([{ name: "", value: "" }]);
+  const [columns, setColumns] = useState<Column[]>([]);
+  const [queryResult, setQueryResult] = useState<{ [key: string]: string }[]>([]);
+
+  const [error, setError] = useState<string>("");
 
   const createParameterRow = (index: number, parameter: Parameter) => {
 
@@ -101,10 +92,18 @@ function App() {
           <Button
             variant="outlined"
             onClick={async () => {
-              const result = await service.query(sql);
-              console.log(result);
-              setShowResult(true);
-              setSelectedStatement("zero");
+              setError("");
+              try {
+                const [columns, rows] = await service.query(sql);
+                console.log(columns);
+                console.log(rows);
+                setShowResult(true);
+                setColumns(columns);
+                setQueryResult(rows);
+              } catch (e) {
+                console.log(e);
+                setError(e as string);
+              }
             }}
           >
             SQL 発行
@@ -120,6 +119,7 @@ function App() {
           </Button>
         </Box>
       </Box >
+      <p>{error}</p>
       <Divider sx={{ marginTop: "1em" }} />
       <Typography>Parameters:</Typography>
       <Grid container className="parameter-header">
@@ -148,8 +148,8 @@ function App() {
           <>
             <Typography>Select statements:</Typography>
             <Stack>
-              <Link onClick={() => setSelectedStatement("two")}>{"select * from (select * from account) as a  where age >= #{age};"}</Link>
-              <Link onClick={() => setSelectedStatement("one")}>{"select * from account"}</Link>
+              <Link onClick={() => { }}>{"select * from (select * from account) as a  where age >= #{age};"}</Link>
+              <Link onClick={() => { }}>{"select * from account"}</Link>
             </Stack>
             <Divider />
           </>
@@ -161,8 +161,8 @@ function App() {
           <>
             <Typography>Result:</Typography>
             <DataGrid
-              columns={[{ field: "id" }, { field: "name" }, { field: "age" }]}
-              rows={selectedStatement ? (selectedStatement === "one" ? rows_o : rows_z_t) : []}
+              columns={columns.sort((a, b) => a.ordinal - b.ordinal).map((c) => { return { field: c.name } })}
+              rows={queryResult}
             />
           </>
           :

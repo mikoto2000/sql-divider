@@ -9,6 +9,7 @@ use tokio::sync::Mutex;
 
 mod command;
 mod database;
+mod model;
 
 struct AppState {
     pub pool: Arc<Mutex<Pool<Postgres>>>,
