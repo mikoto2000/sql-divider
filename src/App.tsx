@@ -5,9 +5,12 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { DataGrid } from '@mui/x-data-grid';
 import { useState } from "react";
 import { Parameter } from "./types";
-import { invoke } from "@tauri-apps/api/core";
+import { Service } from "./services/Service";
+import { TauriService } from "./services/TauriService";
 
 function App() {
+
+  const service: Service = new TauriService();
 
   const [showStatements, setShowStatements] = useState<boolean>(false);
   const [showResult, setShowResult] = useState<boolean>(false);
@@ -98,7 +101,7 @@ function App() {
           <Button
             variant="outlined"
             onClick={async () => {
-              const result = await invoke("query_command", { query: sql });
+              const result = await service.query(sql);
               console.log(result);
               setShowResult(true);
               setSelectedStatement("zero");
