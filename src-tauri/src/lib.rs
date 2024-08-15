@@ -2,9 +2,6 @@ use std::{collections::HashMap, env, sync::Arc};
 
 use dotenv::dotenv;
 
-use sqlx::Column;
-use sqlx::Row;
-use sqlx::TypeInfo;
 use sqlx::{Pool, Postgres};
 
 use tauri::{Manager, State};
@@ -25,39 +22,8 @@ async fn query_command(
     println!("query_command!");
     let state = state.clone();
     let pool = state.pool.clone();
-    let pool = pool.lock().await;
 
-    let query_result = sqlx::query(&query).fetch_all(&*pool).await.unwrap();
-    drop(pool);
-
-    let mut result: Vec<HashMap<String, String>> = vec![];
-    for row in query_result {
-        let mut map: HashMap<String, String> = HashMap::new();
-
-        for column in row.columns() {
-            let type_info = column.type_info();
-            let type_name = type_info.name();
-            match type_name {
-                "INT4" => {
-                    let value: i32 = row.try_get(column.ordinal()).unwrap();
-
-                    map.insert(column.name().to_string(), value.to_string());
-                    print!("{}, ", value);
-                }
-                "VARCHAR" => {
-                    let value: String = row.try_get(column.ordinal()).unwrap();
-
-                    map.insert(column.name().to_string(), value.to_string());
-                    print!("{}, ", value);
-                }
-                _ => {
-                    print!("unknown type {}", type_name);
-                }
-            }
-        }
-        result.push(map);
-        println!()
-    }
+    let result = database::query(&pool, query).await;
 
     Ok(result)
 }
