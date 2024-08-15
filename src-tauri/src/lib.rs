@@ -5,10 +5,12 @@ use dotenv::dotenv;
 use sqlx::Column;
 use sqlx::Row;
 use sqlx::TypeInfo;
-use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
+use sqlx::{Pool, Postgres};
 
 use tauri::{Manager, State};
 use tokio::sync::Mutex;
+
+mod database;
 
 struct AppState {
     pub pool: Arc<Mutex<Pool<Postgres>>>,
@@ -60,19 +62,12 @@ async fn query_command(
     Ok(result)
 }
 
-const DATABASE_URL_DEFAULT: &str = "postgres://postgres:postgres@localhost/postgres";
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub async fn run() {
     dotenv().ok();
 
-    let database_url = env::var("DATABASE_URL").unwrap_or(DATABASE_URL_DEFAULT.to_string());
-
-    let pool = PgPoolOptions::new()
-        .max_connections(5)
-        .connect(&database_url)
-        .await
-        .unwrap();
+    let pool = database::create_connection_pool().await;
 
     tauri::Builder::default()
         .setup(move |app| {
