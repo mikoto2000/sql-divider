@@ -3,7 +3,7 @@ import "./App.css";
 import { AppBar, Box, Button, Divider, Link, Stack, TextField, Typography } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
 import { useState } from "react";
-import { Column, Parameter } from "./types";
+import { Column, Parameter, ParameterPattern } from "./types";
 import { Service } from "./services/Service";
 import { TauriService } from "./services/TauriService";
 import { Parameters } from "./components/Parameters";
@@ -16,7 +16,12 @@ function App() {
   const [showResult, setShowResult] = useState<boolean>(false);
 
   const [sql, setSql] = useState<string>("");
+
   const [parameters, setParameters] = useState<Parameter[]>([{ name: "", value: "" }]);
+
+  const [parameterPattern, setParameterPattern] = useState<ParameterPattern>("mybatis");
+
+
   const [columns, setColumns] = useState<Column[]>([]);
   const [queryResult, setQueryResult] = useState<{ [key: string]: string }[]>([]);
 
@@ -46,7 +51,7 @@ function App() {
             onClick={async () => {
               setError("");
               try {
-                const [columns, rows] = await service.query(sql);
+                const [columns, rows] = await service.query(replaceParameters(sql, parameters));
                 console.log(columns);
                 console.log(rows);
                 setShowResult(true);
@@ -83,8 +88,12 @@ function App() {
       <Divider sx={{ marginTop: "1em" }} />
       <Parameters
         parameters={parameters}
-        setParameters={(newParameter: Parameter[]) => {
+        parameterPattern={parameterPattern}
+        onParametersChange={(newParameter: Parameter[]) => {
           setParameters(newParameter);
+        }}
+        onParameterPattermChange={(newParameterPattern) => {
+          setParameterPattern(newParameterPattern);
         }}
       />
       <Divider sx={{ marginTop: "1em" }} />
@@ -94,11 +103,11 @@ function App() {
           <>
             <Stack spacing={2}>
               {
-                selectStatements.map((e, i) => {
+                selectStatements.map((sql, i) => {
                   return <Link key={i} onClick={async () => {
                     setError("");
                     try {
-                      const [columns, rows] = await service.query(e);
+                      const [columns, rows] = await service.query(replaceParameters(sql, parameters));
                       console.log(columns);
                       console.log(rows);
                       setShowResult(true);
@@ -108,7 +117,7 @@ function App() {
                       console.log(e);
                       setError(e as string);
                     }
-                  }}>{e}</Link>
+                  }}>{sql}</Link>
                 })}
             </Stack>
             <Divider />
@@ -131,6 +140,33 @@ function App() {
       }
     </>
   );
+
+  function replaceParameters(query: string, parameters: Parameter[]) {
+    let replacedQuery = query;
+    parameters.forEach((param: Parameter) => {
+      let replaceStr;
+      switch (parameterPattern) {
+        case "mybatis":
+          replaceStr = "#{" + param.name + "}";
+          break;
+        case "jpa":
+          replaceStr = ":" + param.name;
+          break;
+        case "dapper":
+          replaceStr = "@" + param.name;
+          break;
+        default: // do nothing
+      }
+      console.log(replaceStr);
+      console.log(param.value);
+
+      if (replaceStr) {
+        replacedQuery = replacedQuery.replace(replaceStr, param.value)
+      }
+    });
+    console.log(replacedQuery);
+    return replacedQuery;
+  }
 }
 
 export default App;

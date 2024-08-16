@@ -1,12 +1,14 @@
 import { Button, FormControlLabel, Grid, Radio, RadioGroup, TextField, Typography } from "@mui/material";
-import { Parameter } from "../types";
+import { Parameter, ParameterPattern } from "../types";
 
 type ParametersProps = {
   parameters: Parameter[],
-  setParameters: (newParameter: Parameter[]) => void,
+  parameterPattern: ParameterPattern,
+  onParametersChange: (newParameters: Parameter[]) => void,
+  onParameterPattermChange: (newParameterPattern: ParameterPattern) => void,
 };
 
-export const Parameters: React.FC<ParametersProps> = ({ parameters, setParameters }) => {
+export const Parameters: React.FC<ParametersProps> = ({ parameters, parameterPattern, onParametersChange: setParameters, onParameterPattermChange: setParameterPatternChange }) => {
 
   const createParameterRow = (index: number, parameter: Parameter) => {
 
@@ -35,6 +37,12 @@ export const Parameters: React.FC<ParametersProps> = ({ parameters, setParameter
           <TextField
             placeholder={parameter.value}
             sx={{ width: "100%" }}
+            onChange={(e) => {
+              const newValue = e.currentTarget.value;
+              const targetParameter = parameters[index];
+              targetParameter.value = newValue;
+              setParameters([...parameters]);
+            }}
           >
           </TextField>
         </Grid>
@@ -64,7 +72,14 @@ export const Parameters: React.FC<ParametersProps> = ({ parameters, setParameter
       <Typography>Parameters:</Typography>
       <RadioGroup
         row
-        defaultValue="mybatis"
+        defaultValue={parameterPattern}
+        onChange={(e) => {
+          const newValue = e.currentTarget.value;
+          console.log(newValue);
+          if (newValue) {
+            setParameterPatternChange(newValue as ParameterPattern);
+          }
+        }}
       >
         <FormControlLabel value="mybatis" control={<Radio />} label="MyBatis(#{name})" />
         <FormControlLabel value="jpa" control={<Radio />} label="JPA(:name)" />
