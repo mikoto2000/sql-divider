@@ -19,7 +19,7 @@ function App() {
 
   const [parameters, setParameters] = useState<Parameter[]>([{ name: "", value: "" }]);
 
-  const [parameterPattern, setParameterPattern] = useState<ParameterPattern>("mybatis");
+  const [parameterPattern, setParameterPattern] = useState<ParameterPattern>("jpa");
 
 
   const [columns, setColumns] = useState<Column[]>([]);
@@ -161,7 +161,7 @@ function App() {
       console.log(param.value);
 
       if (replaceStr) {
-        replacedQuery = replacedQuery.replace(replaceStr, param.value)
+        replacedQuery = replacedQuery.replaceAll(replaceStr, param.value)
       }
     });
     console.log(replacedQuery);
