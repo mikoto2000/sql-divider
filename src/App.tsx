@@ -20,6 +20,8 @@ function App() {
   const [columns, setColumns] = useState<Column[]>([]);
   const [queryResult, setQueryResult] = useState<{ [key: string]: string }[]>([]);
 
+  const [selectStatements, setSelectStatements] = useState<string[]>([]);
+
   const [error, setError] = useState<string>("");
 
   const createParameterRow = (index: number, parameter: Parameter) => {
@@ -111,9 +113,17 @@ function App() {
           <Button
             variant="outlined"
             onClick={async () => {
+              setError("");
+              try {
+                const selectStatements = await service.find_select_statement(sql);
+                console.log(selectStatements);
+                setSelectStatements(selectStatements);
+              } catch(e) {
+                console.log(e);
+                setError(e as string);
+              }
               setShowStatements(true)
-            }
-            }
+            }}
           >
             SELECT 文抽出
           </Button>
@@ -148,8 +158,10 @@ function App() {
           <>
             <Typography>Select statements:</Typography>
             <Stack>
-              <Link onClick={() => { }}>{"select * from (select * from account) as a  where age >= #{age};"}</Link>
-              <Link onClick={() => { }}>{"select * from account"}</Link>
+              {
+                selectStatements.map((e, i) => {
+                  return <Link key={i} onClick={() => { }}>{e}</Link>
+                })}
             </Stack>
             <Divider />
           </>
