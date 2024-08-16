@@ -40,21 +40,17 @@ pub async fn query(
                     let value: i32 = row.try_get(column.ordinal()).unwrap();
 
                     map.insert(column.name().to_string(), value.to_string());
-                    print!("{}, ", value);
                 }
                 "VARCHAR" => {
                     let value: String = row.try_get(column.ordinal()).unwrap();
 
                     map.insert(column.name().to_string(), value.to_string());
-                    print!("{}, ", value);
                 }
                 _ => {
-                    print!("unknown type {}", type_name);
                 }
             }
         }
         result.push(map);
-        println!()
     }
 
     let mut columns: Vec<crate::model::Column> = vec![];

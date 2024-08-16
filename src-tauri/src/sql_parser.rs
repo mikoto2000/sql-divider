@@ -31,7 +31,7 @@ fn walk_setexpr(setexpr: &SetExpr) -> Vec<String> {
     match setexpr {
         SetExpr::Select(select) => {
             //println!("Select: {:?}", select);
-            println!("Select: {:?}", select.to_string());
+            //println!("Select: {:?}", select.to_string());
             let mut select_statement = vec![select.to_string()];
             select_statement.extend(walk_table_with_joins(&select.from));
 
