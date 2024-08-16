@@ -10,6 +10,7 @@ use tokio::sync::Mutex;
 mod command;
 mod database;
 mod model;
+mod sql_parser;
 
 struct AppState {
     pub pool: Arc<Mutex<Pool<Postgres>>>,
@@ -29,7 +30,10 @@ pub async fn run() {
             Ok(())
         })
         .plugin(tauri_plugin_shell::init())
-        .invoke_handler(tauri::generate_handler![command::query_command])
+        .invoke_handler(tauri::generate_handler![
+            command::query_command,
+            command::find_select_statement_command,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

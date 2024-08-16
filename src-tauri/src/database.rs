@@ -25,7 +25,7 @@ pub async fn query(
     query: String,
 ) -> Result<(Vec<crate::model::Column>, Vec<HashMap<String, String>>), Error> {
     let pool = pool.lock().await;
-    let mut query_result = sqlx::query(&query).fetch_all(&*pool).await?;
+    let query_result = sqlx::query(&query).fetch_all(&*pool).await?;
     drop(pool);
 
     let mut result: Vec<HashMap<String, String>> = vec![];

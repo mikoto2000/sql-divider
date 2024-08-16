@@ -3312,6 +3312,7 @@ dependencies = [
  "dotenv",
  "serde",
  "serde_json",
+ "sqlparser",
  "sqlx",
  "tauri",
  "tauri-build",
@@ -3327,6 +3328,15 @@ checksum = "f895e3734318cc55f1fe66258926c9b910c124d47520339efecbb6c59cec7c1f"
 dependencies = [
  "nom",
  "unicode_categories",
+]
+
+[[package]]
+name = "sqlparser"
+version = "0.49.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a4a404d0e14905361b918cb8afdb73605e25c1d5029312bd9785142dcb3aa49e"
+dependencies = [
+ "log",
 ]
 
 [[package]]

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use tauri::State;
 
-use crate::{database, model::Column, AppState};
+use crate::{database, model::Column, sql_parser, AppState};
 
 #[tauri::command]
 pub async fn query_command(
@@ -16,6 +16,21 @@ pub async fn query_command(
     let result = database::query(&pool, query).await;
 
     let result = match result {
+        Ok(r) => r,
+        Err(e) => return Err(e.to_string()),
+    };
+
+    Ok(result)
+}
+
+#[tauri::command]
+pub async fn find_select_statement_command(
+    query: String,
+) -> Result<Vec<String>, String> {
+    println!("find_select_statement_command!");
+    let select_statements = sql_parser::find_select_statement(&query).await;
+
+    let result = match select_statements {
         Ok(r) => r,
         Err(e) => return Err(e.to_string()),
     };

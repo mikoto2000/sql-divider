@@ -49,3 +49,10 @@ npm install @mui/material @emotion/react @emotion/styled
 npm i @mui/x-data-grid
 ```
 
+## SQL パーサーの追加
+
+```sh
+cargo add sqlparser
+```
+
+
