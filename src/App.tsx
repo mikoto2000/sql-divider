@@ -3,7 +3,7 @@ import "./App.css";
 import { AppBar, Box, Button, Divider, Link, Stack, TextField, Typography } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
 import { useState } from "react";
-import { Column, Parameter, ParameterPattern } from "./types";
+import { Column, ConnectInfo, Parameter, ParameterPattern } from "./types";
 import { Service } from "./services/Service";
 import { TauriService } from "./services/TauriService";
 import { Parameters } from "./components/Parameters";
@@ -16,6 +16,9 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 function App() {
 
   const service: Service = new TauriService();
+
+  const [connectInfo, setConnectInfo] = useState<ConnectInfo>({ url: "localhost", db: "postgres", user: "postgres", password: "postgres" });
+  const [connecting, setConnecting] = useState<boolean>(false);
 
   const [showStatements, setShowStatements] = useState<boolean>(false);
   const [showResult, setShowResult] = useState<boolean>(false);
@@ -46,11 +49,100 @@ function App() {
         </AccordionSummary>
         <AccordionDetails>
           <Stack spacing={2}>
-            <TextField label="サーバーアドレス" placeholder="localhost" fullWidth />
-            <TextField label="データベース名" placeholder="postgres" fullWidth />
-            <TextField label="ユーザー名" placeholder="postgres" fullWidth />
-            <TextField label="パスワード" placeholder="postgres" fullWidth />
-            <Button variant="contained">接続</Button>
+            <TextField
+              label="サーバーアドレス"
+              placeholder="localhost"
+              fullWidth
+              disabled={connecting}
+              InputProps={{
+                readOnly: connecting,
+              }}
+              value={connectInfo.url}
+              onChange={(e) => {
+                const newValue = e.currentTarget.value
+                if (newValue !== undefined) {
+                  setConnectInfo({ ...connectInfo, url: newValue });
+                }
+              }}
+            />
+            <TextField
+              label="データベース名"
+              placeholder="postgres"
+              fullWidth
+              disabled={connecting}
+              InputProps={{
+                readOnly: connecting,
+              }}
+              value={connectInfo.db}
+              onChange={(e) => {
+                const newValue = e.currentTarget.value
+                if (newValue !== undefined) {
+                  setConnectInfo({ ...connectInfo, db: newValue });
+                }
+              }}
+            />
+            <TextField
+              label="ユーザー名"
+              placeholder="postgres"
+              fullWidth
+              disabled={connecting}
+              InputProps={{
+                readOnly: connecting,
+              }}
+              value={connectInfo.user}
+              onChange={(e) => {
+                const newValue = e.currentTarget.value
+                if (newValue !== undefined) {
+                  setConnectInfo({ ...connectInfo, user: newValue });
+                }
+              }}
+            />
+            <TextField
+              label="パスワード"
+              placeholder="postgres"
+              type="password"
+              fullWidth
+              disabled={connecting}
+              InputProps={{
+                readOnly: connecting,
+              }}
+              value={connectInfo.password}
+              onChange={(e) => {
+                const newValue = e.currentTarget.value
+                if (newValue !== undefined) {
+                  setConnectInfo({ ...connectInfo, password: newValue });
+                }
+              }}
+            />
+            {
+              connecting
+                ?
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={() => {
+                    service.close();
+                    setConnecting(false);
+                  }}
+                >
+                  切断
+                </Button>
+                :
+                <Button
+                  variant="contained"
+                  onClick={() => {
+                    setError("");
+                    try {
+                      service.connect(connectInfo);
+                      setConnecting(true);
+                    } catch (e) {
+                      setError(e as string);
+                    }
+                  }}
+                >
+                  接続
+                </Button>
+            }
           </Stack>
         </AccordionDetails>
       </Accordion>
@@ -73,8 +165,6 @@ function App() {
               setError("");
               try {
                 const [columns, rows] = await service.query(replaceParameters(sql, parameters));
-                console.log(columns);
-                console.log(rows);
                 setShowResult(true);
                 setColumns(columns);
                 setQueryResult(rows);
@@ -92,7 +182,6 @@ function App() {
               setError("");
               try {
                 const selectStatements = await service.find_select_statement(sql);
-                console.log(selectStatements);
                 setSelectStatements(selectStatements);
               } catch (e) {
                 console.log(e);
@@ -129,8 +218,6 @@ function App() {
                     setError("");
                     try {
                       const [columns, rows] = await service.query(replaceParameters(sql, parameters));
-                      console.log(columns);
-                      console.log(rows);
                       setShowResult(true);
                       setColumns(columns);
                       setQueryResult(rows);
@@ -178,14 +265,11 @@ function App() {
           break;
         default: // do nothing
       }
-      console.log(replaceStr);
-      console.log(param.value);
 
       if (replaceStr) {
         replacedQuery = replacedQuery.replaceAll(replaceStr, param.value)
       }
     });
-    console.log(replacedQuery);
     return replacedQuery;
   }
 }
