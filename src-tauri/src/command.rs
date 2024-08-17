@@ -1,13 +1,12 @@
-use std::{collections::HashMap, sync::Arc};
+use std::collections::HashMap;
 
-use tauri::{AppHandle, Manager, State};
-use tokio::sync::Mutex;
+use tauri::State;
 
 use crate::{database, model::Column, sql_parser, AppState};
 
 #[tauri::command]
 pub async fn connect_command(
-    app: AppHandle,
+    state: State<'_, AppState>,
     url: String,
     db: String,
     user: String,
@@ -17,9 +16,7 @@ pub async fn connect_command(
 
     let pool = database::create_connection_pool(url, db, user, password).await;
 
-    app.manage(AppState {
-        pool: Some(Arc::new(Mutex::new(pool))),
-    });
+    *state.pool.lock().await = Some(pool);
 
     Ok(())
 }
@@ -31,9 +28,11 @@ pub async fn close_command(
     println!("close_command!");
 
     let state = state.clone();
-    let pool = state.pool.clone().unwrap();
+    let pool = state.pool.clone();
 
     database::close_connection_pool(pool).await?;
+
+    *state.pool.lock().await = None;
 
     Ok(())
 }
@@ -45,7 +44,7 @@ pub async fn query_command(
 ) -> Result<(Vec<Column>, Vec<HashMap<String, String>>), String> {
     println!("query_command!");
     let state = state.clone();
-    let pool = state.pool.clone().unwrap();
+    let pool = state.pool.clone();
 
     let result = database::query(&pool, query).await;
 

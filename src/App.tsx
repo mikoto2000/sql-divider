@@ -17,7 +17,7 @@ function App() {
 
   const service: Service = new TauriService();
 
-  const [connectInfo, setConnectInfo] = useState<ConnectInfo>({ url: "localhost", db: "postgres", user: "postgres", password: "postgres" });
+  const [connectInfo, setConnectInfo] = useState<ConnectInfo>({ url: "localhost:5432", db: "postgres", user: "postgres", password: "postgres" });
   const [connecting, setConnecting] = useState<boolean>(false);
 
   const [showStatements, setShowStatements] = useState<boolean>(false);
@@ -45,13 +45,13 @@ function App() {
         <AccordionSummary
           expandIcon={<ArrowDropDownIcon />}
         >
-          <Typography>接続情報</Typography>
+          <Typography>接続情報: {`postgres://${connectInfo.user}:****@${connectInfo.url}/${connectInfo.db}`}</Typography>
         </AccordionSummary>
         <AccordionDetails>
           <Stack spacing={2}>
             <TextField
               label="サーバーアドレス"
-              placeholder="localhost"
+              placeholder="localhost:5432"
               fullWidth
               disabled={connecting}
               InputProps={{
@@ -160,6 +160,7 @@ function App() {
         </TextField>
         <Box className="controls">
           <Button
+            disabled={!connecting}
             variant="outlined"
             onClick={async () => {
               setError("");
@@ -177,6 +178,7 @@ function App() {
             SQL 発行
           </Button>
           <Button
+            disabled={!connecting}
             variant="outlined"
             onClick={async () => {
               setError("");

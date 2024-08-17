@@ -17,28 +17,30 @@ pub async fn create_connection_pool(
     let database_url = format!("postgres://{}:{}@{}/{}", user, password, url, db);
 
     PgPoolOptions::new()
-        .max_connections(5)
+        .max_connections(1)
         .connect(&database_url)
         .await
         .unwrap()
 }
 
 pub async fn close_connection_pool(
-    pool: Arc<Mutex<Pool<Postgres>>>,
+    pool: Arc<Mutex<Option<Pool<Postgres>>>>,
 ) -> Result<(), String> {
 
     let pool = pool.lock().await;
-    pool.close().await;
+    pool.clone().unwrap().close().await;
+    drop(pool);
 
     Ok(())
 }
 
 pub async fn query(
-    pool: &Arc<Mutex<Pool<Postgres>>>,
+    pool: &Arc<Mutex<Option<Pool<Postgres>>>>,
     query: String,
 ) -> Result<(Vec<crate::model::Column>, Vec<HashMap<String, String>>), Error> {
     let pool = pool.lock().await;
-    let query_result = sqlx::query(&query).fetch_all(&*pool).await?;
+    let pool = pool.clone().unwrap();
+    let query_result = sqlx::query(&query).fetch_all(&pool).await?;
     drop(pool);
 
     let mut result: Vec<HashMap<String, String>> = vec![];
