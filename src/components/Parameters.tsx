@@ -8,7 +8,12 @@ type ParametersProps = {
   onParameterPattermChange: (newParameterPattern: ParameterPattern) => void,
 };
 
-export const Parameters: React.FC<ParametersProps> = ({ parameters, parameterPattern, onParametersChange: setParameters, onParameterPattermChange: setParameterPatternChange }) => {
+export const Parameters: React.FC<ParametersProps> = ({
+  parameters,
+  parameterPattern,
+  onParametersChange: setParameters,
+  onParameterPattermChange: setParameterPatternChange
+}) => {
 
   const createParameterRow = (index: number, parameter: Parameter) => {
 

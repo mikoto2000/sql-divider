@@ -1,6 +1,6 @@
 import "./App.css";
 
-import { AppBar, Box, Button, Divider, Link, Stack, TextField, Typography } from "@mui/material";
+import { AppBar, Box, Button, Divider, Stack, TextField, Typography } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
 import { useState } from "react";
 import { Column, ConnectInfo, Parameter, ParameterPattern } from "./types";
@@ -12,6 +12,8 @@ import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import { Statements } from "./components/Statements";
+import { replaceParameters } from "./utils";
 
 function App() {
 
@@ -165,7 +167,8 @@ function App() {
             onClick={async () => {
               setError("");
               try {
-                const [columns, rows] = await service.query(replaceParameters(sql, parameters));
+                const [columns, rows] = await service.query(
+                  replaceParameters(sql, parameterPattern, parameters));
                 setShowResult(true);
                 setColumns(columns);
                 setQueryResult(rows);
@@ -209,32 +212,22 @@ function App() {
         }}
       />
       <Divider sx={{ marginTop: "1em" }} />
-      <Typography>Select statements:</Typography>
-      {
-        showStatements ?
-          <>
-            <Stack spacing={2}>
-              {
-                selectStatements.map((sql, i) => {
-                  return <Link key={i} onClick={async () => {
-                    setError("");
-                    try {
-                      const [columns, rows] = await service.query(replaceParameters(sql, parameters));
-                      setShowResult(true);
-                      setColumns(columns);
-                      setQueryResult(rows);
-                    } catch (e) {
-                      console.log(e);
-                      setError(e as string);
-                    }
-                  }}>{sql}</Link>
-                })}
-            </Stack>
-            <Divider />
-          </>
-          :
-          <>結果無し</>
-      }
+      <Statements
+        service={service}
+        show={showStatements}
+        parameterPattern={parameterPattern}
+        parameters={parameters}
+        selectStatements={selectStatements}
+        onStatementClick={(columns, rows) => {
+          setError("");
+          setColumns(columns);
+          setQueryResult(rows);
+        }}
+        onError={(e) => {
+          setError(e as string);
+        }}
+
+      />
       <Divider sx={{ marginTop: "1em" }} />
       <Typography>Result:</Typography>
       {
@@ -251,29 +244,6 @@ function App() {
     </>
   );
 
-  function replaceParameters(query: string, parameters: Parameter[]) {
-    let replacedQuery = query;
-    parameters.forEach((param: Parameter) => {
-      let replaceStr;
-      switch (parameterPattern) {
-        case "mybatis":
-          replaceStr = "#{" + param.name + "}";
-          break;
-        case "jpa":
-          replaceStr = ":" + param.name;
-          break;
-        case "dapper":
-          replaceStr = "@" + param.name;
-          break;
-        default: // do nothing
-      }
-
-      if (replaceStr) {
-        replacedQuery = replacedQuery.replaceAll(replaceStr, param.value)
-      }
-    });
-    return replacedQuery;
-  }
 }
 
 export default App;
