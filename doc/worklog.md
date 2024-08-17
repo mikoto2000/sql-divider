@@ -55,4 +55,8 @@ npm i @mui/x-data-grid
 cargo add sqlparser
 ```
 
+## アイコンの追加
 
+```sh
+npm i @mui/icons-material
+```

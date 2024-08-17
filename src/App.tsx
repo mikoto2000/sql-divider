@@ -8,6 +8,11 @@ import { Service } from "./services/Service";
 import { TauriService } from "./services/TauriService";
 import { Parameters } from "./components/Parameters";
 
+import Accordion from '@mui/material/Accordion';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+
 function App() {
 
   const service: Service = new TauriService();
@@ -33,6 +38,22 @@ function App() {
   return (
     <>
       <AppBar position="static">SQL Divider</AppBar>
+      <Accordion>
+        <AccordionSummary
+          expandIcon={<ArrowDropDownIcon />}
+        >
+          <Typography>接続情報</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Stack spacing={2}>
+            <TextField label="サーバーアドレス" placeholder="localhost" fullWidth />
+            <TextField label="データベース名" placeholder="postgres" fullWidth />
+            <TextField label="ユーザー名" placeholder="postgres" fullWidth />
+            <TextField label="パスワード" placeholder="postgres" fullWidth />
+            <Button variant="contained">接続</Button>
+          </Stack>
+        </AccordionDetails>
+      </Accordion>
       <Box className="sql" sx={{ marginTop: "1em" }}>
         <TextField
           fullWidth
