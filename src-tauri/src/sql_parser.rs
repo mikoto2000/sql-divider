@@ -1,5 +1,8 @@
 use sqlparser::{
-    ast::{Expr, JoinConstraint, JoinOperator, Query, SetExpr, Statement, TableFactor, TableWithJoins},
+    ast::{
+        Distinct, Expr, GroupByExpr, JoinConstraint, JoinOperator, LateralView, Query, Select,
+        SelectItem, SetExpr, Statement, TableFactor, TableWithJoins, Top, TopQuantity,
+    },
     dialect::PostgreSqlDialect,
     parser::{Parser, ParserError},
 };
@@ -27,22 +30,128 @@ fn walk_statement(statement: &Statement) -> Vec<String> {
     }
 }
 
+fn walk_distinct(distinct: &Distinct) -> Vec<String> {
+    match distinct {
+        Distinct::On(vecexpr) => {
+            let mut select_statement = vec![];
+            for expr in vecexpr {
+                select_statement.extend(walk_expr(&expr));
+            }
+            select_statement
+        }
+        _ => {
+            vec![]
+        }
+    }
+}
+
+fn walk_quantity(quantity: &TopQuantity) -> Vec<String> {
+    match quantity {
+        TopQuantity::Expr(expr) => {
+            return walk_expr(&expr);
+        }
+        _ => {
+            return vec![];
+        }
+    }
+}
+
+fn walk_top(top: &Top) -> Vec<String> {
+    if let Some(quantity) = &top.quantity {
+        return walk_quantity(&quantity);
+    };
+
+    vec![]
+}
+
+fn walk_select_item(select_item: &SelectItem) -> Vec<String> {
+    match select_item {
+        SelectItem::UnnamedExpr(expr) => {
+            return walk_expr(expr);
+        }
+        SelectItem::ExprWithAlias { expr, .. } => {
+            return walk_expr(expr);
+        }
+        _ => {
+            return vec![];
+        }
+    }
+}
+
+fn walk_lateral_view(lateral_view: &LateralView) -> Vec<String> {
+    return walk_expr(&lateral_view.lateral_view);
+}
+
+fn walk_group_by_expr(group_by_expr: &GroupByExpr) -> Vec<String> {
+    match group_by_expr {
+        GroupByExpr::Expressions(vecexpr, _) => {
+            let mut select_statement = vec![];
+            for expr in vecexpr {
+                select_statement.extend(walk_expr(&expr));
+            }
+            return select_statement;
+        }
+        _ => {
+            return vec![];
+        }
+    }
+}
+
+fn walk_select(select: &Select) -> Vec<String> {
+    //println!("Select: {:?}", select);
+    //println!("Select: {:?}", select.to_string());
+    let mut select_statement = vec![select.to_string()];
+
+    if let Some(distinct) = &select.distinct {
+        select_statement.extend(walk_distinct(&distinct));
+    };
+
+    if let Some(top) = &select.top {
+        select_statement.extend(walk_top(&top));
+    };
+
+    for select_item in &select.projection {
+        select_statement.extend(walk_select_item(&select_item));
+    }
+
+    select_statement.extend(walk_table_with_joins(&select.from));
+
+    for lateral_view in &select.lateral_views {
+        select_statement.extend(walk_lateral_view(&lateral_view));
+    }
+
+    if let Some(prewhere) = &select.prewhere {
+        select_statement.extend(walk_expr(&prewhere));
+    };
+
+    if let Some(selection) = &select.selection {
+        select_statement.extend(walk_expr(&selection));
+    };
+
+    select_statement.extend(walk_group_by_expr(&select.group_by));
+
+    for expr in &select.cluster_by {
+        select_statement.extend(walk_expr(&expr));
+    }
+
+    for expr in &select.distribute_by {
+        select_statement.extend(walk_expr(&expr));
+    }
+
+    for expr in &select.sort_by {
+        select_statement.extend(walk_expr(&expr));
+    }
+
+    if let Some(having) = &select.having {
+        select_statement.extend(walk_expr(&having));
+    };
+    return select_statement;
+}
+
 fn walk_setexpr(setexpr: &SetExpr) -> Vec<String> {
     match setexpr {
         SetExpr::Select(select) => {
-            //println!("Select: {:?}", select);
-            //println!("Select: {:?}", select.to_string());
-            let mut select_statement = vec![select.to_string()];
-            select_statement.extend(walk_table_with_joins(&select.from));
-
-            if let Some(prewhere) = &select.prewhere {
-                select_statement.extend(walk_expr(&prewhere));
-            };
-
-            if let Some(selection) = &select.selection {
-                select_statement.extend(walk_expr(&selection));
-            };
-            return select_statement;
+            return walk_select(select);
         }
         SetExpr::Query(query) => {
             return walk_query(query);
