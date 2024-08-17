@@ -1,7 +1,6 @@
 use sqlparser::{
     ast::{
-        Distinct, Expr, GroupByExpr, JoinConstraint, JoinOperator, LateralView, Query, Select,
-        SelectItem, SetExpr, Statement, TableFactor, TableWithJoins, Top, TopQuantity,
+        ConnectBy, Distinct, Expr, GroupByExpr, JoinConstraint, JoinOperator, LateralView, NamedWindowDefinition, NamedWindowExpr, OrderByExpr, Query, Select, SelectItem, SetExpr, Statement, TableFactor, TableWithJoins, Top, TopQuantity, WindowSpec, WithFill
     },
     dialect::PostgreSqlDialect,
     parser::{Parser, ParserError},
@@ -97,6 +96,77 @@ fn walk_group_by_expr(group_by_expr: &GroupByExpr) -> Vec<String> {
     }
 }
 
+fn walk_with_fill(with_fill: &WithFill) -> Vec<String> {
+    let mut select_statement = vec![];
+
+    if let Some(expr) = &with_fill.from {
+        select_statement.extend(walk_expr(&expr));
+    };
+
+    if let Some(expr) = &with_fill.to {
+        select_statement.extend(walk_expr(&expr));
+    };
+
+    if let Some(expr) = &with_fill.step {
+        select_statement.extend(walk_expr(&expr));
+    };
+
+    select_statement
+}
+
+fn walk_order_by_expr(order_by_expr: &OrderByExpr) -> Vec<String> {
+    let mut select_statement = vec![];
+
+    select_statement.extend(walk_expr(&order_by_expr.expr));
+
+    if let Some(with_fill) = &order_by_expr.with_fill {
+        select_statement.extend(walk_with_fill(&with_fill));
+    };
+
+    select_statement
+}
+
+fn walk_window_spec(window_spec: &WindowSpec) -> Vec<String> {
+    let mut select_statement = vec![];
+
+    for expr in &window_spec.partition_by {
+        select_statement.extend(walk_expr(expr));
+    }
+
+    for order_by_expr in &window_spec.order_by {
+        select_statement.extend(walk_order_by_expr(order_by_expr));
+    }
+
+    select_statement
+}
+
+fn walk_named_window_expr(named_window_expr: &NamedWindowExpr) -> Vec<String> {
+    match named_window_expr {
+        NamedWindowExpr::WindowSpec(window_spec) => {
+            return walk_window_spec(window_spec);
+        }
+        _ => {
+            return vec![];
+        }
+    }
+}
+
+fn walk_named_window_definition(named_window_definition: &NamedWindowDefinition) -> Vec<String> {
+    return walk_named_window_expr(&named_window_definition.1);
+}
+
+fn walk_connect_by(connect_by: &ConnectBy) -> Vec<String> {
+    let mut select_statement = vec![];
+
+    select_statement.extend(walk_expr(&connect_by.condition));
+
+    for relationship in &connect_by.relationships {
+        select_statement.extend(walk_expr(&relationship));
+    }
+
+    select_statement
+}
+
 fn walk_select(select: &Select) -> Vec<String> {
     //println!("Select: {:?}", select);
     //println!("Select: {:?}", select.to_string());
@@ -145,6 +215,19 @@ fn walk_select(select: &Select) -> Vec<String> {
     if let Some(having) = &select.having {
         select_statement.extend(walk_expr(&having));
     };
+
+    for named_window_definition in &select.named_window {
+        select_statement.extend(walk_named_window_definition(&named_window_definition));
+    }
+
+    if let Some(expr) = &select.qualify {
+        select_statement.extend(walk_expr(&expr));
+    };
+
+    if let Some(connect_by) = &select.connect_by {
+        select_statement.extend(walk_connect_by(&connect_by));
+    };
+
     return select_statement;
 }
 
