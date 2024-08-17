@@ -1,4 +1,4 @@
-use std::{collections::HashMap, env, sync::Arc};
+use std::{collections::HashMap, sync::Arc};
 
 use sqlx::Column;
 use sqlx::Error;
@@ -8,16 +8,29 @@ use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
 use tokio::sync::Mutex;
 
-const DATABASE_URL_DEFAULT: &str = "postgres://postgres:postgres@localhost/postgres";
-
-pub async fn create_connection_pool() -> Pool<Postgres> {
-    let database_url = env::var("DATABASE_URL").unwrap_or(DATABASE_URL_DEFAULT.to_string());
+pub async fn create_connection_pool(
+    url: String,
+    db: String,
+    user: String,
+    password: String,
+) -> Pool<Postgres> {
+    let database_url = format!("postgres://{}:{}@{}/{}", user, password, url, db);
 
     PgPoolOptions::new()
         .max_connections(5)
         .connect(&database_url)
         .await
         .unwrap()
+}
+
+pub async fn close_connection_pool(
+    pool: Arc<Mutex<Pool<Postgres>>>,
+) -> Result<(), String> {
+
+    let pool = pool.lock().await;
+    pool.close().await;
+
+    Ok(())
 }
 
 pub async fn query(
@@ -46,8 +59,7 @@ pub async fn query(
 
                     map.insert(column.name().to_string(), value.to_string());
                 }
-                _ => {
-                }
+                _ => {}
             }
         }
         result.push(map);
