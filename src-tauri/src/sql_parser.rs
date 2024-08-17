@@ -1,6 +1,9 @@
 use sqlparser::{
     ast::{
-        ConnectBy, Distinct, Expr, GroupByExpr, JoinConstraint, JoinOperator, LateralView, NamedWindowDefinition, NamedWindowExpr, OrderByExpr, Query, Select, SelectItem, SetExpr, Statement, TableFactor, TableWithJoins, Top, TopQuantity, WindowSpec, WithFill
+        ConnectBy, Distinct, Expr, FunctionArg, FunctionArgExpr, GroupByExpr, JoinConstraint,
+        JoinOperator, LateralView, NamedWindowDefinition, NamedWindowExpr, OrderByExpr, Query,
+        Select, SelectItem, SetExpr, Statement, TableFactor, TableFunctionArgs, TableVersion,
+        TableWithJoins, Top, TopQuantity, WindowSpec, WithFill,
     },
     dialect::PostgreSqlDialect,
     parser::{Parser, ParserError},
@@ -184,7 +187,9 @@ fn walk_select(select: &Select) -> Vec<String> {
         select_statement.extend(walk_select_item(&select_item));
     }
 
-    select_statement.extend(walk_table_with_joins(&select.from));
+    for table_with_join in &select.from {
+        select_statement.extend(walk_table_with_joins(table_with_join));
+    }
 
     for lateral_view in &select.lateral_views {
         select_statement.extend(walk_lateral_view(&lateral_view));
@@ -271,78 +276,169 @@ fn walk_expr(expr: &Expr) -> Vec<String> {
     }
 }
 
-fn walk_table_with_joins(twjs: &Vec<TableWithJoins>) -> Vec<String> {
+fn walk_function_arg_expr(function_arg_expr: &FunctionArgExpr) -> Vec<String> {
+    match function_arg_expr {
+        FunctionArgExpr::Expr(expr) => {
+            return walk_expr(&expr);
+        }
+        _ => {
+            return vec![];
+        }
+    }
+}
+
+fn walk_function_arg(function_arg: &FunctionArg) -> Vec<String> {
+    match function_arg {
+        FunctionArg::Named { arg, .. } => {
+            return walk_function_arg_expr(&arg);
+        }
+        FunctionArg::Unnamed(function_arg_expr) => {
+            return walk_function_arg_expr(&function_arg_expr);
+        }
+    }
+}
+
+fn walk_table_function_args(table_function_args: &TableFunctionArgs) -> Vec<String> {
+    let mut select_statements = vec![];
+
+    for arg in &table_function_args.args {
+        select_statements.extend(walk_function_arg(&arg));
+    }
+    select_statements
+}
+
+fn walk_table_version(table_version: &TableVersion) -> Vec<String> {
+    match table_version {
+        TableVersion::ForSystemTimeAsOf(expr) => {
+            return walk_expr(&expr);
+        }
+    }
+}
+
+fn walk_table_factor(table_factor: &TableFactor) -> Vec<String> {
+    match table_factor {
+        TableFactor::Table {
+            args,
+            with_hints,
+            version,
+            ..
+        } => {
+            let mut select_statements = vec![];
+
+            if let Some(args) = args {
+                select_statements.extend(walk_table_function_args(args));
+            }
+
+            for expr in with_hints {
+                select_statements.extend(walk_expr(expr));
+            }
+
+            if let Some(version) = version {
+                select_statements.extend(walk_table_version(version));
+            }
+
+            select_statements
+        }
+        TableFactor::Derived { subquery, .. } => {
+            return walk_query(subquery);
+        }
+        TableFactor::TableFunction { expr, .. } => {
+            return walk_expr(&expr);
+        }
+        TableFactor::Function { args, .. } => {
+            let mut select_statements = vec![];
+
+            for function_arg in args {
+                select_statements.extend(walk_function_arg(&function_arg));
+            }
+
+            select_statements
+        }
+        TableFactor::UNNEST { array_exprs, .. } => {
+            let mut select_statements = vec![];
+            for expr in array_exprs {
+                select_statements.extend(walk_expr(&expr));
+            }
+            select_statements
+        }
+        TableFactor::JsonTable { json_expr, .. } => {
+            return walk_expr(&json_expr);
+        }
+        TableFactor::NestedJoin {
+            table_with_joins, ..
+        } => {
+            return walk_table_with_joins(table_with_joins);
+        }
+        _ => {
+            return vec![];
+        }
+    }
+}
+
+fn walk_table_with_joins(twjs: &TableWithJoins) -> Vec<String> {
     //println!("{:?}", twjs);
     let mut select_statements = vec![];
-    for twj in twjs {
-        match &twj.relation {
+
+    select_statements.extend(walk_table_factor(&twjs.relation));
+
+    for join in &twjs.joins {
+        match &join.relation {
             TableFactor::Derived { subquery, .. } => {
                 select_statements.extend(walk_query(subquery));
             }
-            _ => {
-                select_statements.extend(vec![]);
-            }
+            _ => {}
         }
 
-        for join in &twj.joins {
-            match &join.relation {
-                TableFactor::Derived { subquery, .. } => {
-                    select_statements.extend(walk_query(subquery));
+        match &join.join_operator {
+            JoinOperator::CrossJoin => {}
+            JoinOperator::CrossApply => {}
+            JoinOperator::OuterApply => {}
+            JoinOperator::AsOf {
+                match_condition,
+                constraint,
+            } => {
+                select_statements.extend(walk_expr(match_condition));
+                if let JoinConstraint::On(on) = constraint {
+                    select_statements.extend(walk_expr(on));
                 }
-                _ => {}
+            }
+            JoinOperator::LeftOuter(join_constraint) => {
+                if let JoinConstraint::On(on) = join_constraint {
+                    select_statements.extend(walk_expr(on));
+                }
+            }
+            JoinOperator::RightOuter(join_constraint) => {
+                if let JoinConstraint::On(on) = join_constraint {
+                    select_statements.extend(walk_expr(on));
+                }
+            }
+            JoinOperator::FullOuter(join_constraint) => {
+                if let JoinConstraint::On(on) = join_constraint {
+                    select_statements.extend(walk_expr(on));
+                }
+            }
+            JoinOperator::LeftSemi(join_constraint) => {
+                if let JoinConstraint::On(on) = join_constraint {
+                    select_statements.extend(walk_expr(on));
+                }
+            }
+            JoinOperator::RightSemi(join_constraint) => {
+                if let JoinConstraint::On(on) = join_constraint {
+                    select_statements.extend(walk_expr(on));
+                }
+            }
+            JoinOperator::LeftAnti(join_constraint) => {
+                if let JoinConstraint::On(on) = join_constraint {
+                    select_statements.extend(walk_expr(on));
+                }
+            }
+            JoinOperator::RightAnti(join_constraint) => {
+                if let JoinConstraint::On(on) = join_constraint {
+                    select_statements.extend(walk_expr(on));
+                }
             }
 
-            match &join.join_operator {
-                JoinOperator::CrossJoin => {}
-                JoinOperator::CrossApply => {}
-                JoinOperator::OuterApply => {}
-                JoinOperator::AsOf {
-                    match_condition,
-                    constraint,
-                } => {
-                    select_statements.extend(walk_expr(match_condition));
-                    if let JoinConstraint::On(on) = constraint {
-                        select_statements.extend(walk_expr(on));
-                    }
-                }
-                JoinOperator::LeftOuter(join_constraint) => {
-                    if let JoinConstraint::On(on) = join_constraint {
-                        select_statements.extend(walk_expr(on));
-                    }
-                }
-                JoinOperator::RightOuter(join_constraint) => {
-                    if let JoinConstraint::On(on) = join_constraint {
-                        select_statements.extend(walk_expr(on));
-                    }
-                }
-                JoinOperator::FullOuter(join_constraint) => {
-                    if let JoinConstraint::On(on) = join_constraint {
-                        select_statements.extend(walk_expr(on));
-                    }
-                }
-                JoinOperator::LeftSemi(join_constraint) => {
-                    if let JoinConstraint::On(on) = join_constraint {
-                        select_statements.extend(walk_expr(on));
-                    }
-                }
-                JoinOperator::RightSemi(join_constraint) => {
-                    if let JoinConstraint::On(on) = join_constraint {
-                        select_statements.extend(walk_expr(on));
-                    }
-                }
-                JoinOperator::LeftAnti(join_constraint) => {
-                    if let JoinConstraint::On(on) = join_constraint {
-                        select_statements.extend(walk_expr(on));
-                    }
-                }
-                JoinOperator::RightAnti(join_constraint) => {
-                    if let JoinConstraint::On(on) = join_constraint {
-                        select_statements.extend(walk_expr(on));
-                    }
-                }
-
-                _ => {}
-            }
+            _ => {}
         }
     }
     return select_statements;
