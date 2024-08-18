@@ -1,11 +1,6 @@
 use sqlparser::{
     ast::{
-        ConnectBy, Distinct, Expr, ExprWithAlias, Function, FunctionArg, FunctionArgExpr,
-        FunctionArgumentClause, FunctionArgumentList, FunctionArguments, GroupByExpr, HavingBound,
-        JoinConstraint, JoinOperator, LateralView, ListAggOnOverflow, Measure,
-        NamedWindowDefinition, NamedWindowExpr, OrderByExpr, PivotValueSource, Query, Select,
-        SelectItem, SetExpr, Statement, SymbolDefinition, TableFactor, TableFunctionArgs,
-        TableVersion, TableWithJoins, Top, TopQuantity, WindowSpec, WindowType, WithFill,
+        Array, ConnectBy, DictionaryField, Distinct, Expr, ExprWithAlias, Function, FunctionArg, FunctionArgExpr, FunctionArgumentClause, FunctionArgumentList, FunctionArguments, GroupByExpr, HavingBound, Interval, JoinConstraint, JoinOperator, LambdaFunction, LateralView, ListAggOnOverflow, Map, MapEntry, Measure, NamedWindowDefinition, NamedWindowExpr, OrderByExpr, PivotValueSource, Query, Select, SelectItem, SetExpr, Statement, SymbolDefinition, TableFactor, TableFunctionArgs, TableVersion, TableWithJoins, Top, TopQuantity, WindowSpec, WindowType, WithFill
     },
     dialect::PostgreSqlDialect,
     parser::{Parser, ParserError},
@@ -368,6 +363,48 @@ fn walk_function(function: &Function) -> Vec<String> {
     select_statements
 }
 
+fn walk_dictionary_field(dictionary_field: &DictionaryField) -> Vec<String> {
+    return walk_expr(&dictionary_field.value);
+}
+
+fn walk_map_entry(map_entry: &MapEntry) -> Vec<String> {
+    let mut select_statements = vec![];
+
+    select_statements.extend(walk_expr(&map_entry.key));
+
+    select_statements.extend(walk_expr(&map_entry.value));
+
+    select_statements
+}
+
+fn walk_map(map: &Map) -> Vec<String> {
+    let mut select_statements = vec![];
+
+    for entry in &map.entries {
+        select_statements.extend(walk_map_entry(&entry));
+    }
+
+    select_statements
+}
+
+fn walk_array(array: &Array) -> Vec<String> {
+    let mut select_statements = vec![];
+
+    for e in &array.elem {
+        select_statements.extend(walk_expr(&e));
+    }
+
+    select_statements
+}
+
+fn walk_interval(interval: &Interval) -> Vec<String> {
+    return walk_expr(&interval.value);
+}
+
+fn walk_lambda_function(lambda_function: &LambdaFunction) -> Vec<String> {
+    return walk_expr(&lambda_function.body);
+}
+
 fn walk_expr(expr: &Expr) -> Vec<String> {
     //println!("{:?}", expr);
     match &expr {
@@ -648,8 +685,118 @@ fn walk_expr(expr: &Expr) -> Vec<String> {
         Expr::Function(function) => {
             return walk_function(&function);
         }
+        Expr::Case {
+            operand,
+            conditions,
+            results,
+            else_result,
+        } => {
+            let mut select_statements = vec![];
+
+            if let Some(operand) = &operand {
+                select_statements.extend(walk_expr(&operand));
+            }
+
+            for expr in conditions {
+                select_statements.extend(walk_expr(&expr));
+            }
+
+            for expr in results {
+                select_statements.extend(walk_expr(&expr));
+            }
+
+            if let Some(else_result) = &else_result {
+                select_statements.extend(walk_expr(&else_result));
+            }
+
+            select_statements
+        }
+        Expr::Exists { subquery, .. } => {
+            return walk_query(&subquery);
+        }
         Expr::Subquery(subquery) => {
             return walk_query(subquery);
+        }
+        Expr::GroupingSets(grouping_sets) => {
+            let mut select_statements = vec![];
+
+            for exprs in grouping_sets {
+                for expr in exprs {
+                    select_statements.extend(walk_expr(&expr));
+                }
+            }
+
+            select_statements
+        }
+        Expr::Cube(cube) => {
+            let mut select_statements = vec![];
+
+            for exprs in cube {
+                for expr in exprs {
+                    select_statements.extend(walk_expr(&expr));
+                }
+            }
+
+            select_statements
+        }
+        Expr::Rollup(rollup) => {
+            let mut select_statements = vec![];
+
+            for exprs in rollup {
+                for expr in exprs {
+                    select_statements.extend(walk_expr(&expr));
+                }
+            }
+
+            select_statements
+        }
+        Expr::Tuple(tuple) => {
+            let mut select_statements = vec![];
+
+            for expr in tuple {
+                select_statements.extend(walk_expr(&expr));
+            }
+
+            select_statements
+        }
+        Expr::Struct { values, .. } => {
+            let mut select_statements = vec![];
+
+            for expr in values {
+                select_statements.extend(walk_expr(&expr));
+            }
+
+            select_statements
+        }
+        Expr::Named { expr, .. } => {
+            return walk_expr(&expr);
+        }
+        Expr::Dictionary(vec_dictionary_field) => {
+            let mut select_statements = vec![];
+
+            for dictionary_field in vec_dictionary_field {
+                select_statements.extend(walk_dictionary_field(&dictionary_field));
+            }
+
+            select_statements
+        }
+        Expr::Map(map) => {
+            return walk_map(&map);
+        }
+        Expr::Array(array) => {
+            return walk_array(&array);
+        }
+        Expr::Interval(interval) => {
+            return walk_interval(&interval);
+        }
+        Expr::OuterJoin(outer_join) => {
+            return walk_expr(&outer_join);
+        }
+        Expr::Prior(prior) => {
+            return walk_expr(&prior);
+        }
+        Expr::Lambda(lambda) => {
+            return walk_lambda_function(&lambda);
         }
         _ => {
             return vec![];
@@ -844,9 +991,6 @@ fn walk_table_factor(table_factor: &TableFactor) -> Vec<String> {
             }
 
             select_statements
-        }
-        _ => {
-            return vec![];
         }
     }
 }
