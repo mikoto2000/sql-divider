@@ -1,9 +1,6 @@
 use sqlparser::{
     ast::{
-        ConnectBy, Distinct, Expr, FunctionArg, FunctionArgExpr, GroupByExpr, JoinConstraint,
-        JoinOperator, LateralView, NamedWindowDefinition, NamedWindowExpr, OrderByExpr, Query,
-        Select, SelectItem, SetExpr, Statement, TableFactor, TableFunctionArgs, TableVersion,
-        TableWithJoins, Top, TopQuantity, WindowSpec, WithFill,
+        ConnectBy, Distinct, Expr, ExprWithAlias, FunctionArg, FunctionArgExpr, GroupByExpr, JoinConstraint, JoinOperator, LateralView, Measure, NamedWindowDefinition, NamedWindowExpr, OrderByExpr, PivotValueSource, Query, Select, SelectItem, SetExpr, Statement, SymbolDefinition, TableFactor, TableFunctionArgs, TableVersion, TableWithJoins, Top, TopQuantity, WindowSpec, WithFill
     },
     dialect::PostgreSqlDialect,
     parser::{Parser, ParserError},
@@ -304,6 +301,7 @@ fn walk_table_function_args(table_function_args: &TableFunctionArgs) -> Vec<Stri
     for arg in &table_function_args.args {
         select_statements.extend(walk_function_arg(&arg));
     }
+
     select_statements
 }
 
@@ -313,6 +311,44 @@ fn walk_table_version(table_version: &TableVersion) -> Vec<String> {
             return walk_expr(&expr);
         }
     }
+}
+
+fn walk_expr_with_alias(expr_with_alias: &ExprWithAlias) -> Vec<String> {
+    return walk_expr(&expr_with_alias.expr);
+}
+
+fn walk_pivot_value_source(pivot_value_source: &PivotValueSource) -> Vec<String> {
+    match pivot_value_source {
+        PivotValueSource::List(vecexpr) => {
+            let mut select_statements = vec![];
+
+            for expr in vecexpr {
+                select_statements.extend(walk_expr_with_alias(&expr));
+            }
+
+            select_statements
+        }
+        PivotValueSource::Any(vecexpr) => {
+            let mut select_statements = vec![];
+
+            for expr in vecexpr {
+                select_statements.extend(walk_order_by_expr(&expr));
+            }
+
+            select_statements
+        }
+        PivotValueSource::Subquery(query) => {
+            return walk_query(&query);
+        }
+    }
+}
+
+fn walk_measure(measure: &Measure) -> Vec<String> {
+    return walk_expr(&measure.expr);
+}
+
+fn walk_symbol_definition(symbol_definition: &SymbolDefinition) -> Vec<String> {
+    return walk_expr(&symbol_definition.definition);
 }
 
 fn walk_table_factor(table_factor: &TableFactor) -> Vec<String> {
@@ -368,6 +404,65 @@ fn walk_table_factor(table_factor: &TableFactor) -> Vec<String> {
             table_with_joins, ..
         } => {
             return walk_table_with_joins(table_with_joins);
+        }
+        TableFactor::Pivot {
+            table,
+            aggregate_functions,
+            value_source,
+            default_on_null,
+            ..
+        } => {
+            let mut select_statements = vec![];
+
+            select_statements.extend(walk_table_factor(&table));
+
+            for expr_with_alias in aggregate_functions {
+                select_statements.extend(walk_expr_with_alias(&expr_with_alias));
+            }
+
+            select_statements.extend(walk_pivot_value_source(&value_source));
+
+            if let Some(expr) = default_on_null {
+                select_statements.extend(walk_expr(expr));
+            }
+
+            select_statements
+        }
+        TableFactor::Unpivot {
+            table,
+            ..
+        } => {
+            return walk_table_factor(&table);
+        }
+        TableFactor::MatchRecognize {
+            table,
+            partition_by,
+            order_by,
+            measures,
+            symbols,
+            ..
+        } => {
+            let mut select_statements = vec![];
+
+            select_statements.extend(walk_table_factor(&table));
+
+            for expr in partition_by {
+                select_statements.extend(walk_expr(&expr));
+            }
+
+            for expr in order_by {
+                select_statements.extend(walk_order_by_expr(&expr));
+            }
+
+            for measure in measures {
+                select_statements.extend(walk_measure(&measure));
+            }
+
+            for symbol_definition in symbols {
+                select_statements.extend(walk_symbol_definition(&symbol_definition));
+            }
+
+            select_statements
         }
         _ => {
             return vec![];
