@@ -1,6 +1,11 @@
 use sqlparser::{
     ast::{
-        ConnectBy, Distinct, Expr, ExprWithAlias, FunctionArg, FunctionArgExpr, GroupByExpr, JoinConstraint, JoinOperator, LateralView, Measure, NamedWindowDefinition, NamedWindowExpr, OrderByExpr, PivotValueSource, Query, Select, SelectItem, SetExpr, Statement, SymbolDefinition, TableFactor, TableFunctionArgs, TableVersion, TableWithJoins, Top, TopQuantity, WindowSpec, WithFill
+        ConnectBy, Distinct, Expr, ExprWithAlias, Function, FunctionArg, FunctionArgExpr,
+        FunctionArgumentClause, FunctionArgumentList, FunctionArguments, GroupByExpr, HavingBound,
+        JoinConstraint, JoinOperator, LateralView, ListAggOnOverflow, Measure,
+        NamedWindowDefinition, NamedWindowExpr, OrderByExpr, PivotValueSource, Query, Select,
+        SelectItem, SetExpr, Statement, SymbolDefinition, TableFactor, TableFunctionArgs,
+        TableVersion, TableWithJoins, Top, TopQuantity, WindowSpec, WindowType, WithFill,
     },
     dialect::PostgreSqlDialect,
     parser::{Parser, ParserError},
@@ -258,11 +263,390 @@ fn walk_query(query: &Query) -> Vec<String> {
     return walk_setexpr(&body);
 }
 
+fn walk_list_agg_on_overflow(list_agg_on_overflow: &ListAggOnOverflow) -> Vec<String> {
+    match list_agg_on_overflow {
+        ListAggOnOverflow::Truncate { filler, .. } => {
+            if let Some(filler) = &filler {
+                return walk_expr(&filler);
+            } else {
+                return vec![];
+            }
+        }
+        _ => {
+            return vec![];
+        }
+    }
+}
+
+fn walk_having_bound(having_bound: &HavingBound) -> Vec<String> {
+    return walk_expr(&having_bound.1);
+}
+
+fn walk_function_argument_clause(function_argument_clause: &FunctionArgumentClause) -> Vec<String> {
+    match function_argument_clause {
+        FunctionArgumentClause::OrderBy(order_by) => {
+            let mut select_statements = vec![];
+
+            for order_by_expr in order_by {
+                select_statements.extend(walk_order_by_expr(&order_by_expr));
+            }
+
+            select_statements
+        }
+        FunctionArgumentClause::Limit(limit) => {
+            return walk_expr(&limit);
+        }
+        FunctionArgumentClause::OnOverflow(overflow) => {
+            return walk_list_agg_on_overflow(&overflow);
+        }
+        FunctionArgumentClause::Having(having) => {
+            return walk_having_bound(having);
+        }
+        _ => {
+            return vec![];
+        }
+    }
+}
+
+fn walk_function_argument_list(function_argument_list: &FunctionArgumentList) -> Vec<String> {
+    let mut select_statements = vec![];
+    for function_arg in &function_argument_list.args {
+        select_statements.extend(walk_function_arg(&function_arg));
+    }
+
+    for function_argument_clause in &function_argument_list.clauses {
+        select_statements.extend(walk_function_argument_clause(&function_argument_clause));
+    }
+
+    select_statements
+}
+
+fn walk_function_arguments(function_arguments: &FunctionArguments) -> Vec<String> {
+    match function_arguments {
+        FunctionArguments::Subquery(subquery) => {
+            return walk_query(&subquery);
+        }
+        FunctionArguments::List(list) => {
+            return walk_function_argument_list(&list);
+        }
+        _ => {
+            return vec![];
+        }
+    }
+}
+
+fn walk_window_type(window_type: &WindowType) -> Vec<String> {
+    match window_type {
+        WindowType::WindowSpec(window_spec) => {
+            return walk_window_spec(&window_spec);
+        }
+        _ => {
+            return vec![];
+        }
+    }
+}
+
+fn walk_function(function: &Function) -> Vec<String> {
+    let mut select_statements = vec![];
+
+    select_statements.extend(walk_function_arguments(&function.parameters));
+
+    select_statements.extend(walk_function_arguments(&function.args));
+
+    if let Some(filter) = &function.filter {
+        select_statements.extend(walk_expr(&filter));
+    };
+
+    if let Some(window_type) = &function.over {
+        select_statements.extend(walk_window_type(&window_type));
+    };
+
+    for order_by_expr in &function.within_group {
+        select_statements.extend(walk_order_by_expr(&order_by_expr));
+    }
+
+    select_statements
+}
+
 fn walk_expr(expr: &Expr) -> Vec<String> {
     //println!("{:?}", expr);
     match &expr {
-        Expr::InSubquery { subquery, .. } => {
-            return walk_query(subquery);
+        Expr::JsonAccess { value, .. } => {
+            return walk_expr(&value);
+        }
+        Expr::CompositeAccess { expr, .. } => {
+            return walk_expr(&expr);
+        }
+        Expr::IsFalse(expr) => {
+            return walk_expr(&expr);
+        }
+        Expr::IsNotFalse(expr) => {
+            return walk_expr(&expr);
+        }
+        Expr::IsTrue(expr) => {
+            return walk_expr(&expr);
+        }
+        Expr::IsNotTrue(expr) => {
+            return walk_expr(&expr);
+        }
+        Expr::IsNull(expr) => {
+            return walk_expr(&expr);
+        }
+        Expr::IsNotNull(expr) => {
+            return walk_expr(&expr);
+        }
+        Expr::IsUnknown(expr) => {
+            return walk_expr(&expr);
+        }
+        Expr::IsNotUnknown(expr) => {
+            return walk_expr(&expr);
+        }
+        Expr::IsDistinctFrom(expr1, expr2) => {
+            let mut select_statements = vec![];
+
+            select_statements.extend(walk_expr(&expr1));
+
+            select_statements.extend(walk_expr(&expr2));
+
+            select_statements
+        }
+        Expr::IsNotDistinctFrom(expr1, expr2) => {
+            let mut select_statements = vec![];
+
+            select_statements.extend(walk_expr(&expr1));
+
+            select_statements.extend(walk_expr(&expr2));
+
+            select_statements
+        }
+        Expr::InList { expr, list, .. } => {
+            let mut select_statements = vec![];
+
+            select_statements.extend(walk_expr(&expr));
+
+            for expr in list {
+                select_statements.extend(walk_expr(&expr));
+            }
+
+            select_statements
+        }
+        Expr::InSubquery { expr, subquery, .. } => {
+            let mut select_statements = vec![];
+
+            select_statements.extend(walk_expr(&expr));
+
+            select_statements.extend(walk_query(subquery));
+
+            select_statements
+        }
+        Expr::InUnnest {
+            expr, array_expr, ..
+        } => {
+            let mut select_statements = vec![];
+
+            select_statements.extend(walk_expr(&expr));
+
+            select_statements.extend(walk_expr(&array_expr));
+
+            select_statements
+        }
+        Expr::Between {
+            expr, low, high, ..
+        } => {
+            let mut select_statements = vec![];
+
+            select_statements.extend(walk_expr(&expr));
+
+            select_statements.extend(walk_expr(&low));
+
+            select_statements.extend(walk_expr(&high));
+
+            select_statements
+        }
+        Expr::BinaryOp { left, right, .. } => {
+            let mut select_statements = vec![];
+
+            select_statements.extend(walk_expr(&left));
+
+            select_statements.extend(walk_expr(&right));
+
+            select_statements
+        }
+        Expr::Like { expr, pattern, .. } => {
+            let mut select_statements = vec![];
+
+            select_statements.extend(walk_expr(&expr));
+
+            select_statements.extend(walk_expr(&pattern));
+
+            select_statements
+        }
+        Expr::ILike { expr, pattern, .. } => {
+            let mut select_statements = vec![];
+
+            select_statements.extend(walk_expr(&expr));
+
+            select_statements.extend(walk_expr(&pattern));
+
+            select_statements
+        }
+        Expr::SimilarTo { expr, pattern, .. } => {
+            let mut select_statements = vec![];
+
+            select_statements.extend(walk_expr(&expr));
+
+            select_statements.extend(walk_expr(&pattern));
+
+            select_statements
+        }
+        Expr::RLike { expr, pattern, .. } => {
+            let mut select_statements = vec![];
+
+            select_statements.extend(walk_expr(&expr));
+
+            select_statements.extend(walk_expr(&pattern));
+
+            select_statements
+        }
+        Expr::AnyOp { left, right, .. } => {
+            let mut select_statements = vec![];
+
+            select_statements.extend(walk_expr(&left));
+
+            select_statements.extend(walk_expr(&right));
+
+            select_statements
+        }
+        Expr::AllOp { left, right, .. } => {
+            let mut select_statements = vec![];
+
+            select_statements.extend(walk_expr(&left));
+
+            select_statements.extend(walk_expr(&right));
+
+            select_statements
+        }
+        Expr::UnaryOp { expr, .. } => {
+            return walk_expr(&expr);
+        }
+        Expr::Convert { expr, styles, .. } => {
+            let mut select_statements = vec![];
+
+            select_statements.extend(walk_expr(&expr));
+
+            for style in styles {
+                select_statements.extend(walk_expr(&style));
+            }
+
+            select_statements
+        }
+        Expr::Cast { expr, .. } => {
+            return walk_expr(&expr);
+        }
+        Expr::AtTimeZone {
+            timestamp,
+            time_zone,
+            ..
+        } => {
+            let mut select_statements = vec![];
+
+            select_statements.extend(walk_expr(&timestamp));
+
+            select_statements.extend(walk_expr(&time_zone));
+
+            select_statements
+        }
+        Expr::Extract { expr, .. } => {
+            return walk_expr(&expr);
+        }
+        Expr::Ceil { expr, .. } => {
+            return walk_expr(&expr);
+        }
+        Expr::Floor { expr, .. } => {
+            return walk_expr(&expr);
+        }
+        Expr::Position { expr, r#in, .. } => {
+            let mut select_statements = vec![];
+
+            select_statements.extend(walk_expr(&expr));
+
+            select_statements.extend(walk_expr(&r#in));
+
+            select_statements
+        }
+        Expr::Substring {
+            expr,
+            substring_from,
+            substring_for,
+            ..
+        } => {
+            let mut select_statements = vec![];
+
+            select_statements.extend(walk_expr(&expr));
+
+            if let Some(substring_from) = &substring_from {
+                select_statements.extend(walk_expr(&substring_from));
+            };
+
+            if let Some(substring_for) = &substring_for {
+                select_statements.extend(walk_expr(&substring_for));
+            };
+
+            select_statements
+        }
+        Expr::Trim {
+            expr,
+            trim_what,
+            trim_characters,
+            ..
+        } => {
+            let mut select_statements = vec![];
+
+            select_statements.extend(walk_expr(&expr));
+
+            if let Some(trim_what) = &trim_what {
+                select_statements.extend(walk_expr(&trim_what));
+            };
+
+            if let Some(trim_characters) = &trim_characters {
+                for trim_character in trim_characters {
+                    select_statements.extend(walk_expr(&trim_character));
+                }
+            };
+
+            select_statements
+        }
+        Expr::Overlay {
+            expr,
+            overlay_what,
+            overlay_from,
+            overlay_for,
+        } => {
+            let mut select_statements = vec![];
+
+            select_statements.extend(walk_expr(&expr));
+
+            select_statements.extend(walk_expr(&overlay_what));
+
+            select_statements.extend(walk_expr(&overlay_from));
+
+            if let Some(overlay_for) = &overlay_for {
+                select_statements.extend(walk_expr(&overlay_for));
+            };
+
+            select_statements
+        }
+        Expr::Collate { expr, .. } => {
+            return walk_expr(&expr);
+        }
+        Expr::Nested(expr) => {
+            return walk_expr(&expr);
+        }
+        Expr::MapAccess { column, .. } => {
+            return walk_expr(&column);
+        }
+        Expr::Function(function) => {
+            return walk_function(&function);
         }
         Expr::Subquery(subquery) => {
             return walk_query(subquery);
@@ -428,10 +812,7 @@ fn walk_table_factor(table_factor: &TableFactor) -> Vec<String> {
 
             select_statements
         }
-        TableFactor::Unpivot {
-            table,
-            ..
-        } => {
+        TableFactor::Unpivot { table, .. } => {
             return walk_table_factor(&table);
         }
         TableFactor::MatchRecognize {
