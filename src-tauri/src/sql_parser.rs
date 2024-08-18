@@ -1,6 +1,13 @@
 use sqlparser::{
     ast::{
-        Array, ConnectBy, DictionaryField, Distinct, Expr, ExprWithAlias, Function, FunctionArg, FunctionArgExpr, FunctionArgumentClause, FunctionArgumentList, FunctionArguments, GroupByExpr, HavingBound, Interval, JoinConstraint, JoinOperator, LambdaFunction, LateralView, ListAggOnOverflow, Map, MapEntry, Measure, NamedWindowDefinition, NamedWindowExpr, OrderByExpr, PivotValueSource, Query, Select, SelectItem, SetExpr, Statement, SymbolDefinition, TableFactor, TableFunctionArgs, TableVersion, TableWithJoins, Top, TopQuantity, WindowSpec, WindowType, WithFill
+        Array, ConnectBy, Cte, DictionaryField, Distinct, Expr, ExprWithAlias, Fetch, Function,
+        FunctionArg, FunctionArgExpr, FunctionArgumentClause, FunctionArgumentList,
+        FunctionArguments, GroupByExpr, HavingBound, Interpolate, InterpolateExpr, Interval,
+        JoinConstraint, JoinOperator, LambdaFunction, LateralView, ListAggOnOverflow, Map,
+        MapEntry, Measure, NamedWindowDefinition, NamedWindowExpr, Offset, OrderBy, OrderByExpr,
+        PivotValueSource, Query, Select, SelectItem, SetExpr, Statement, SymbolDefinition,
+        TableFactor, TableFunctionArgs, TableVersion, TableWithJoins, Top, TopQuantity, WindowSpec,
+        WindowType, With, WithFill,
     },
     dialect::PostgreSqlDialect,
     parser::{Parser, ParserError},
@@ -253,9 +260,96 @@ fn walk_setexpr(setexpr: &SetExpr) -> Vec<String> {
     }
 }
 
+fn walk_cte(cte: &Cte) -> Vec<String> {
+    return walk_query(&cte.query);
+}
+
+fn walk_with(with: &With) -> Vec<String> {
+    let mut select_statements = vec![];
+
+    for cte in &with.cte_tables {
+        select_statements.extend(walk_cte(&cte));
+    }
+
+    select_statements
+}
+
+fn walk_interpolate_expr(interpolate_expr: &InterpolateExpr) -> Vec<String> {
+    if let Some(expr) = &interpolate_expr.expr {
+        return walk_expr(&expr);
+    } else {
+        return vec![];
+    }
+}
+
+fn walk_interpolate(interpolate: &Interpolate) -> Vec<String> {
+    let mut select_statements = vec![];
+
+    if let Some(exprs) = &interpolate.exprs {
+        for expr in exprs {
+            select_statements.extend(walk_interpolate_expr(&expr));
+        }
+    }
+
+    select_statements
+}
+
+fn walk_order_by(order_by: &OrderBy) -> Vec<String> {
+    let mut select_statements = vec![];
+
+    for expr in &order_by.exprs {
+        select_statements.extend(walk_order_by_expr(expr));
+    }
+
+    if let Some(interpolate) = &order_by.interpolate {
+        select_statements.extend(walk_interpolate(&interpolate));
+    }
+
+    select_statements
+}
+
+fn walk_offset(offset: &Offset) -> Vec<String> {
+    return walk_expr(&offset.value);
+}
+
+fn walk_fetch(fetch: &Fetch) -> Vec<String> {
+    if let Some(expr) = &fetch.quantity {
+        return walk_expr(&expr);
+    } else {
+        return vec![];
+    }
+}
+
 fn walk_query(query: &Query) -> Vec<String> {
-    let body = &query.body;
-    return walk_setexpr(&body);
+    let mut select_statements = vec![];
+
+    if let Some(with) = &query.with {
+        select_statements.extend(walk_with(&with));
+    }
+
+    select_statements.extend(walk_setexpr(&query.body));
+
+    if let Some(order_by) = &query.order_by {
+        select_statements.extend(walk_order_by(&order_by));
+    }
+
+    if let Some(limit) = &query.limit {
+        select_statements.extend(walk_expr(&limit));
+    }
+
+    for limit_by_elem in &query.limit_by {
+        select_statements.extend(walk_expr(&limit_by_elem));
+    }
+
+    if let Some(offset) = &query.offset {
+        select_statements.extend(walk_offset(&offset));
+    }
+
+    if let Some(fetch) = &query.fetch {
+        select_statements.extend(walk_fetch(&fetch));
+    }
+
+    select_statements
 }
 
 fn walk_list_agg_on_overflow(list_agg_on_overflow: &ListAggOnOverflow) -> Vec<String> {
