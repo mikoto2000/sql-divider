@@ -181,7 +181,6 @@ function App() {
             SQL 発行
           </Button>
           <Button
-            disabled={!connecting}
             variant="outlined"
             onClick={async () => {
               setError("");
