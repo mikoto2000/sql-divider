@@ -1,6 +1,7 @@
 import { Divider, Link, Stack, Typography } from "@mui/material";
 import { Service } from "../services/Service";
 import { Column, Parameter, ParameterPattern, QueryResult } from "../types";
+import { replaceParameters } from "../utils";
 
 type StatementsProps = {
   service: Service,
@@ -34,7 +35,7 @@ export const Statements: React.FC<StatementsProps> = ({
                   return <Link key={i} onClick={async () => {
                     onError("");
                     try {
-                      return await service.query(replaceParameters(sql, parameters));
+                      return await service.query(replaceParameters(sql, parameterPattern, parameters));
                     } catch (e) {
                       console.log(e);
                       onError(e as string);
