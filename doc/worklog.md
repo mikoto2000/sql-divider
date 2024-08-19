@@ -60,3 +60,10 @@ cargo add sqlparser
 ```sh
 npm i @mui/icons-material
 ```
+
+## ウィンドウステート保存のためのプラグイン追加
+
+```sh
+npm add @tauri-apps/plugin-window-state
+cargo add tauri-plugin-window-state
+```
