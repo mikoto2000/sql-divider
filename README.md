@@ -1,7 +1,15 @@
-# Tauri + React + Typescript
+# Sql Divider
 
-This template should help get you started developing with Tauri, React and Typescript in Vite.
+SQL のサブクエリを抽出し、それぞれの部分ごとにクエリの発行ができるツール。
 
-## Recommended IDE Setup
+# License:
 
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+Copyright (C) 2024 mikoto2000
+
+This software is released under the MIT License, see LICENSE
+
+このソフトウェアは MIT ライセンスの下で公開されています。 LICENSE を参照してください。
+
+# Author:
+
+mikoto2000 <mikoto2000@gmail.com>
