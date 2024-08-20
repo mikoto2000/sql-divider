@@ -1,4 +1,5 @@
 import "./App.css";
+import notice from "../NOTICE.md?raw";
 
 import { AppBar, Box, Button, Dialog, DialogContent, Divider, Stack, TextField, Typography } from "@mui/material";
 import Tooltip from '@mui/material/Tooltip';
@@ -17,7 +18,6 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { Statements } from "./components/Statements";
 import { replaceParameters } from "./utils";
 
-import notice from "../NOTICE.md";
 
 function App() {
 
