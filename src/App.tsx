@@ -1,6 +1,7 @@
 import "./App.css";
 
-import { AppBar, Box, Button, Divider, Stack, TextField, Typography } from "@mui/material";
+import { AppBar, Box, Button, Dialog, DialogContent, Divider, Stack, TextField, Typography } from "@mui/material";
+import Tooltip from '@mui/material/Tooltip';
 import { DataGrid } from '@mui/x-data-grid';
 import { useState } from "react";
 import { Column, ConnectInfo, Parameter, ParameterPattern } from "./types";
@@ -12,8 +13,11 @@ import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { Statements } from "./components/Statements";
 import { replaceParameters } from "./utils";
+
+import notice from "../NOTICE.md";
 
 function App() {
 
@@ -39,10 +43,22 @@ function App() {
 
   const [error, setError] = useState<string>("");
 
+  const [showNoticeDialog, setShowNoticeDialog] = useState<boolean>(false);
 
   return (
     <>
-      <AppBar position="static">SQL Divider</AppBar>
+      <AppBar position="static">
+        <div style={{ display: "flex", flexDirection: "row" }}>
+          <div style={{ flexGrow: "1" }}>SQL Divider</div>
+          <Tooltip title="ライセンス情報">
+            <div
+              style={{ flexGrow: "0" }}
+              onClick={() => setShowNoticeDialog(true)}
+            >
+              <InfoOutlinedIcon style={{ cursor: 'pointer' }} /></div>
+          </Tooltip>
+        </div>
+      </AppBar>
       <Accordion>
         <AccordionSummary
           expandIcon={<ArrowDropDownIcon />}
@@ -240,6 +256,15 @@ function App() {
           :
           <>結果無し</>
       }
+      <Dialog
+        open={showNoticeDialog}
+        onClose={() => { setShowNoticeDialog(false) }} >
+        <DialogContent>
+          <pre style={{ fontSize: "0.75em" }}>
+            {(notice as any)}
+          </pre>
+        </DialogContent>
+      </Dialog>
     </>
   );
 
