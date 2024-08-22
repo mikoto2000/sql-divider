@@ -1,9 +1,8 @@
 import "./App.css";
 import notice from "../NOTICE.md?raw";
 
-import { AppBar, Box, Button, Dialog, DialogContent, Divider, Stack, TextField, Typography } from "@mui/material";
+import { AppBar, Box, Button, Dialog, DialogContent, Divider, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from "@mui/material";
 import Tooltip from '@mui/material/Tooltip';
-import { DataGrid } from '@mui/x-data-grid';
 import { useState } from "react";
 import { Column, ConnectInfo, Parameter, ParameterPattern } from "./types";
 import { Service } from "./services/Service";
@@ -186,7 +185,7 @@ function App() {
                 const [columns, rows] = await service.query(
                   replaceParameters(sql, parameterPattern, parameters));
                 setShowResult(true);
-                setColumns(columns);
+                setColumns(columns.sort((a, b) => a.ordinal - b.ordinal));
                 setQueryResult(rows);
               } catch (e) {
                 console.log(e);
@@ -235,7 +234,7 @@ function App() {
         selectStatements={selectStatements}
         onStatementClick={(columns, rows) => {
           setError("");
-          setColumns(columns);
+          setColumns(columns.sort((a, b) => a.ordinal - b.ordinal));
           setQueryResult(rows);
         }}
         onError={(e) => {
@@ -248,10 +247,22 @@ function App() {
       {
         showResult ?
           <>
-            <DataGrid
-              columns={columns.sort((a, b) => a.ordinal - b.ordinal).map((c) => { return { field: c.name } })}
-              rows={queryResult}
-            />
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    {columns.map((c) => <TableCell>{c.name}</TableCell>)}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {queryResult.map((e => {
+                    return (<TableRow>
+                      {columns.map((c) => <TableCell>{e[c.name]}</TableCell>)}
+                    </TableRow>)
+                  }))}
+                </TableBody>
+              </Table>
+            </TableContainer>
           </>
           :
           <>結果無し</>

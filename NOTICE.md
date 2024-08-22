@@ -57,14 +57,6 @@
 
 
 
-@mui/x-date-grid - https://github.com/mui/mui-x
-
- MIT License
-
- See: Licensing: https://mui.com/x/introduction/licensing/
-
-
-
 @tauri-apps/api - https://github.com/tauri-apps/tauri
 
   MIT License
