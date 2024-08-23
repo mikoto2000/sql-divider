@@ -4,7 +4,7 @@ import notice from "../NOTICE.md?raw";
 import { AppBar, Box, Button, Dialog, DialogContent, Divider, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from "@mui/material";
 import Tooltip from '@mui/material/Tooltip';
 import { useState } from "react";
-import { Column, ConnectInfo, Parameter, ParameterPattern } from "./types";
+import { Column, ConnectInfo, Parameter, ParameterPattern, QueryResult } from "./types";
 import { Service } from "./services/Service";
 import { TauriService } from "./services/TauriService";
 import { Parameters } from "./components/Parameters";
@@ -17,6 +17,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { Statements } from "./components/Statements";
 import { replaceParameters } from "./utils";
+import { QueryResultView } from "./components/QueryResultView";
 
 
 type ConnectStatus = "disconnect" | "connect" | "connecting";
@@ -41,7 +42,7 @@ function App() {
 
 
   const [columns, setColumns] = useState<Column[]>([]);
-  const [queryResult, setQueryResult] = useState<{ [key: string]: string }[]>([]);
+  const [queryResult, setQueryResult] = useState<QueryResult>([]);
 
   const [selectStatements, setSelectStatements] = useState<string[]>([]);
 
@@ -268,30 +269,11 @@ function App() {
 
       />
       <Divider sx={{ marginTop: "1em" }} />
-      <Typography>Result:</Typography>
-      {
-        showResult ?
-          <>
-            <TableContainer component={Paper}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    {columns.map((c) => <TableCell>{c.name}</TableCell>)}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {queryResult.map((e => {
-                    return (<TableRow>
-                      {columns.map((c) => <TableCell>{e[c.name]}</TableCell>)}
-                    </TableRow>)
-                  }))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </>
-          :
-          <>結果無し</>
-      }
+      <QueryResultView
+        show={showResult}
+        columns={columns}
+        queryResult={queryResult}
+      />
       <Dialog
         open={showNoticeDialog}
         onClose={() => { setShowNoticeDialog(false) }} >
