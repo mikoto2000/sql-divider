@@ -28,6 +28,7 @@ function App() {
   const [showConnectInfo, setShowConnectInfo] = useState<boolean>(true);
   const [connectInfo, setConnectInfo] = useState<ConnectInfo>({ url: "localhost:5432", db: "postgres", user: "postgres", password: "postgres" });
   const [connectStatus, setConnectStatus] = useState<ConnectStatus>("disconnect");
+  const [connectionError, setConnectionError] = useState<string>("");
 
   const [showStatements, setShowStatements] = useState<boolean>(false);
   const [showResult, setShowResult] = useState<boolean>(false);
@@ -72,7 +73,7 @@ function App() {
         <AccordionSummary
           expandIcon={<ArrowDropDownIcon />}
         >
-          <Typography>接続情報: {`postgres://${connectInfo.user}:****@${connectInfo.url}/${connectInfo.db}`}</Typography>
+          <Typography>{ connectStatus === "connect" ? "接続中: " : "接続情報: " }{`postgres://${connectInfo.user}:****@${connectInfo.url}/${connectInfo.db}`}</Typography>
         </AccordionSummary>
         <AccordionDetails>
           <Stack spacing={2}>
@@ -160,14 +161,14 @@ function App() {
                   <Button
                     variant="contained"
                     onClick={async () => {
-                      setError("");
+                      setConnectionError("");
                       setConnectStatus("connecting");
                       try {
                         await service.connect(connectInfo);
                         setConnectStatus("connect");
                         setShowConnectInfo(false);
                       } catch (e) {
-                        setError(e as string);
+                        setConnectionError(e as string);
                         setConnectStatus("disconnect");
                       }
                     }}
@@ -184,6 +185,7 @@ function App() {
                   </Button>
             }
           </Stack>
+          <Box>{connectionError ? `Error: ${connectionError}` : <></>}</Box>
         </AccordionDetails>
       </Accordion>
       <Box className="sql" sx={{ marginTop: "1em" }}>
