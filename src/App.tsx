@@ -13,10 +13,13 @@ import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import CircularProgress from '@mui/material/CircularProgress';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { Statements } from "./components/Statements";
 import { replaceParameters } from "./utils";
 
+
+type ConnectStatus = "disconnect" | "connect" | "connecting";
 
 function App() {
 
@@ -24,7 +27,7 @@ function App() {
 
   const [showConnectInfo, setShowConnectInfo] = useState<boolean>(true);
   const [connectInfo, setConnectInfo] = useState<ConnectInfo>({ url: "localhost:5432", db: "postgres", user: "postgres", password: "postgres" });
-  const [connecting, setConnecting] = useState<boolean>(false);
+  const [connectStatus, setConnectStatus] = useState<ConnectStatus>("disconnect");
 
   const [showStatements, setShowStatements] = useState<boolean>(false);
   const [showResult, setShowResult] = useState<boolean>(false);
@@ -77,9 +80,9 @@ function App() {
               label="サーバーアドレス"
               placeholder="localhost:5432"
               fullWidth
-              disabled={connecting}
+              disabled={connectStatus === "connect"}
               InputProps={{
-                readOnly: connecting,
+                readOnly: connectStatus === "connect",
               }}
               value={connectInfo.url}
               onChange={(e) => {
@@ -93,9 +96,9 @@ function App() {
               label="データベース名"
               placeholder="postgres"
               fullWidth
-              disabled={connecting}
+              disabled={connectStatus === "connect"}
               InputProps={{
-                readOnly: connecting,
+                readOnly: connectStatus === "connect",
               }}
               value={connectInfo.db}
               onChange={(e) => {
@@ -109,9 +112,9 @@ function App() {
               label="ユーザー名"
               placeholder="postgres"
               fullWidth
-              disabled={connecting}
+              disabled={connectStatus === "connect"}
               InputProps={{
-                readOnly: connecting,
+                readOnly: connectStatus === "connect",
               }}
               value={connectInfo.user}
               onChange={(e) => {
@@ -126,9 +129,9 @@ function App() {
               placeholder="postgres"
               type="password"
               fullWidth
-              disabled={connecting}
+              disabled={connectStatus === "connect"}
               InputProps={{
-                readOnly: connecting,
+                readOnly: connectStatus === "connect",
               }}
               value={connectInfo.password}
               onChange={(e) => {
@@ -139,34 +142,46 @@ function App() {
               }}
             />
             {
-              connecting
+              connectStatus === "connect"
                 ?
                 <Button
                   variant="contained"
                   color="error"
                   onClick={() => {
                     service.close();
-                    setConnecting(false);
+                    setConnectStatus("disconnect");
                   }}
                 >
                   切断
                 </Button>
                 :
-                <Button
-                  variant="contained"
-                  onClick={async () => {
-                    setError("");
-                    try {
-                      await service.connect(connectInfo);
-                      setConnecting(true);
-                      setShowConnectInfo(false);
-                    } catch (e) {
-                      setError(e as string);
-                    }
-                  }}
-                >
-                  接続
-                </Button>
+                connectStatus === "disconnect"
+                  ?
+                  <Button
+                    variant="contained"
+                    onClick={async () => {
+                      setError("");
+                      setConnectStatus("connecting");
+                      try {
+                        await service.connect(connectInfo);
+                        setConnectStatus("connect");
+                        setShowConnectInfo(false);
+                      } catch (e) {
+                        setError(e as string);
+                        setConnectStatus("disconnect");
+                      }
+                    }}
+                  >
+                    接続
+                  </Button>
+                  :
+                  <Button
+                    variant="contained"
+                    disabled
+                  >
+                    <CircularProgress size={20} />
+                    接続中
+                  </Button>
             }
           </Stack>
         </AccordionDetails>
@@ -185,7 +200,7 @@ function App() {
         </TextField>
         <Box className="controls">
           <Button
-            disabled={!connecting}
+            disabled={!connectStatus}
             variant="outlined"
             onClick={async () => {
               setError("");
