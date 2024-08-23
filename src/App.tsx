@@ -22,6 +22,7 @@ function App() {
 
   const service: Service = new TauriService();
 
+  const [showConnectInfo, setShowConnectInfo] = useState<boolean>(true);
   const [connectInfo, setConnectInfo] = useState<ConnectInfo>({ url: "localhost:5432", db: "postgres", user: "postgres", password: "postgres" });
   const [connecting, setConnecting] = useState<boolean>(false);
 
@@ -58,7 +59,13 @@ function App() {
           </Tooltip>
         </div>
       </AppBar>
-      <Accordion>
+      <Accordion
+        defaultExpanded={true}
+        expanded={showConnectInfo}
+        onChange={(_event, expanded) => {
+          setShowConnectInfo(expanded);
+        }}
+      >
         <AccordionSummary
           expandIcon={<ArrowDropDownIcon />}
         >
@@ -152,6 +159,7 @@ function App() {
                     try {
                       await service.connect(connectInfo);
                       setConnecting(true);
+                      setShowConnectInfo(false);
                     } catch (e) {
                       setError(e as string);
                     }
