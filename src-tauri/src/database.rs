@@ -1,5 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 
+use sqlx::types::chrono::NaiveDate;
+use sqlx::types::BigDecimal;
 use sqlx::Column;
 use sqlx::Error;
 use sqlx::Row;
@@ -67,6 +69,11 @@ pub async fn query(
 
                     map.insert(column.name().to_string(), value.to_string());
                 }
+                "NUMERIC" => {
+                    let value: BigDecimal = row.try_get(column.ordinal()).unwrap();
+
+                    map.insert(column.name().to_string(), value.to_string());
+                }
                 "BOOL" => {
                     let value: bool = row.try_get(column.ordinal()).unwrap();
 
@@ -107,7 +114,14 @@ pub async fn query(
 
                     map.insert(column.name().to_string(), value.to_string());
                 }
-                _ => {}
+                "DATE" => {
+                    let value: NaiveDate = row.try_get(column.ordinal()).unwrap();
+
+                    map.insert(column.name().to_string(), value.to_string());
+                }
+                _ => {
+                    println!("{}", type_name);
+                }
             }
         }
         result.push(map);

@@ -34,7 +34,7 @@ npm notice
 ```sh
 cargo add dotenv
 cargo add tokio --features full
-cargo add sqlx --features postgres,runtime-tokio
+cargo add sqlx --features postgres,runtime-tokio,bigdecimal,chrono
 ```
 
 ## UI コンポーネントフレームワーク追加
