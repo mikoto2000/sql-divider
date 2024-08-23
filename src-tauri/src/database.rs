@@ -13,14 +13,20 @@ pub async fn create_connection_pool(
     db: String,
     user: String,
     password: String,
-) -> Pool<Postgres> {
+) -> Result<Pool<Postgres>, String> {
     let database_url = format!("postgres://{}:{}@{}/{}", user, password, url, db);
 
-    PgPoolOptions::new()
+    let result = PgPoolOptions::new()
         .max_connections(1)
         .connect(&database_url)
-        .await
-        .unwrap()
+        .await;
+
+    let result = match result {
+        Ok(r) => r,
+        Err(e) => return Err(e.to_string()),
+    };
+
+    Ok(result)
 }
 
 pub async fn close_connection_pool(

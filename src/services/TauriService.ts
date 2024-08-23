@@ -4,7 +4,7 @@ import { Service } from "./Service";
 
 export class TauriService implements Service {
   async connect(connectInfo: ConnectInfo): Promise<void> {
-    return await invoke("connect_command", connectInfo)
+    await invoke("connect_command", connectInfo);
   }
   async close(): Promise<void> {
     return await invoke("close_command", {})

@@ -147,10 +147,10 @@ function App() {
                 :
                 <Button
                   variant="contained"
-                  onClick={() => {
+                  onClick={async () => {
                     setError("");
                     try {
-                      service.connect(connectInfo);
+                      await service.connect(connectInfo);
                       setConnecting(true);
                     } catch (e) {
                       setError(e as string);

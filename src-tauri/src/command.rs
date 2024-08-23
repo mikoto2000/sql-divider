@@ -14,7 +14,7 @@ pub async fn connect_command(
 ) -> Result<(), String> {
     println!("connect_command!");
 
-    let pool = database::create_connection_pool(url, db, user, password).await;
+    let pool = database::create_connection_pool(url, db, user, password).await?;
 
     *state.pool.lock().await = Some(pool);
 
