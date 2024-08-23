@@ -1,7 +1,7 @@
 import "./App.css";
 import notice from "../NOTICE.md?raw";
 
-import { AppBar, Box, Button, Dialog, DialogContent, Divider, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from "@mui/material";
+import { AppBar, Box, Button, Dialog, DialogContent, Divider, Stack, TextField, Typography } from "@mui/material";
 import Tooltip from '@mui/material/Tooltip';
 import { useState } from "react";
 import { Column, ConnectInfo, Parameter, ParameterPattern, QueryResult } from "./types";
