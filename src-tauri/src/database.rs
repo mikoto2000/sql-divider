@@ -51,12 +51,52 @@ pub async fn query(
             let type_info = column.type_info();
             let type_name = type_info.name();
             match type_name {
+                "FLOAT4" => {
+                    let value: f32 = row.try_get(column.ordinal()).unwrap();
+
+                    map.insert(column.name().to_string(), value.to_string());
+                }
+                "FLOAT8" => {
+                    let value: f64 = row.try_get(column.ordinal()).unwrap();
+
+                    map.insert(column.name().to_string(), value.to_string());
+                }
+                "BOOL" => {
+                    let value: bool = row.try_get(column.ordinal()).unwrap();
+
+                    map.insert(column.name().to_string(), value.to_string());
+                }
+                "INT1" => {
+                    let value: i8 = row.try_get(column.ordinal()).unwrap();
+
+                    map.insert(column.name().to_string(), value.to_string());
+                }
+                "INT2" => {
+                    let value: i16 = row.try_get(column.ordinal()).unwrap();
+
+                    map.insert(column.name().to_string(), value.to_string());
+                }
                 "INT4" => {
                     let value: i32 = row.try_get(column.ordinal()).unwrap();
 
                     map.insert(column.name().to_string(), value.to_string());
                 }
+                "INT8" => {
+                    let value: i64 = row.try_get(column.ordinal()).unwrap();
+
+                    map.insert(column.name().to_string(), value.to_string());
+                }
+                "CHAR" => {
+                    let value: String = row.try_get(column.ordinal()).unwrap();
+
+                    map.insert(column.name().to_string(), value.to_string());
+                }
                 "VARCHAR" => {
+                    let value: String = row.try_get(column.ordinal()).unwrap();
+
+                    map.insert(column.name().to_string(), value.to_string());
+                }
+                "TEXT" => {
                     let value: String = row.try_get(column.ordinal()).unwrap();
 
                     map.insert(column.name().to_string(), value.to_string());
