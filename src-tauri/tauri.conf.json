@@ -1,6 +1,6 @@
 {
   "productName": "sql-divider",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "identifier": "dev.mikoto2000.sql.divider",
   "build": {
     "beforeDevCommand": "npm run dev",

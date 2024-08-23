@@ -1,6 +1,6 @@
 [package]
 name = "sql-divider"
-version = "0.0.1"
+version = "0.0.2"
 description = "SQL のサブクエリ発行を簡単にするやつ"
 authors = ["mikoto2000"]
 edition = "2021"
