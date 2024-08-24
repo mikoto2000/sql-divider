@@ -59,7 +59,7 @@ function App() {
         setConnectInfo(initial_connectInfo);
       }
     })()
-  });
+  }, []);
 
   return (
     <>
