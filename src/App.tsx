@@ -238,7 +238,7 @@ function App() {
             onClick={async () => {
               setError("");
               try {
-                const selectStatements = await service.find_select_statement(sql);
+                const selectStatements = await service.findSelectStatement(sql);
                 setSelectStatements(selectStatements);
               } catch (e) {
                 console.log(e);
@@ -270,10 +270,10 @@ function App() {
         parameterPattern={parameterPattern}
         parameters={parameters}
         selectStatements={selectStatements}
-        onStatementClick={(columns, rows) => {
+        onStatementClick={(_columns, _rows) => {
           setError("");
-          setColumns(columns.sort((a, b) => a.ordinal - b.ordinal));
-          setQueryResult(rows);
+          //setColumns(columns.sort((a, b) => a.ordinal - b.ordinal));
+          //setQueryResult(rows);
         }}
         onError={(e) => {
           setError(e as string);

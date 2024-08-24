@@ -1,8 +1,13 @@
 use std::collections::HashMap;
 
-use tauri::State;
+use tauri::webview::WebviewWindowBuilder;
+use tauri::{AppHandle, Emitter, Listener, State};
 
-use crate::{database, model::Column, sql_parser, AppState};
+use crate::{
+    database,
+    model::{Column, Parameter},
+    sql_parser, AppState,
+};
 
 #[tauri::command]
 pub async fn connect_command(
@@ -22,9 +27,7 @@ pub async fn connect_command(
 }
 
 #[tauri::command]
-pub async fn close_command(
-    state: State<'_, AppState>,
-) -> Result<(), String> {
+pub async fn close_command(state: State<'_, AppState>) -> Result<(), String> {
     println!("close_command!");
 
     let state = state.clone();
@@ -67,4 +70,41 @@ pub async fn find_select_statement_command(query: String) -> Result<Vec<String>,
     };
 
     Ok(result)
+}
+
+#[tauri::command]
+pub async fn open_new_statement_window_command(
+    app: AppHandle,
+    parameter_pattern: String,
+    parameters: Vec<Parameter>,
+    select_statements: Vec<String>,
+    columns: Vec<Column>,
+    query_result: Vec<HashMap<String, String>>,
+) -> Result<(), tauri::Error> {
+    println!("open_new_statement_window_command!");
+
+    let builder =
+        WebviewWindowBuilder::new(&app, "select_md5", tauri::WebviewUrl::App("statement.html".into()));
+
+    let new_webview = builder.title("new").build()?;
+
+    new_webview.once("done", move |event| {
+        println!("KITAYO");
+        println!("{:?}", event);
+        app.emit_to(
+            "select_md5",
+            "data",
+            (
+                parameter_pattern,
+                parameters,
+                select_statements,
+                columns,
+                query_result,
+            ),
+        ).unwrap();
+    });
+
+    new_webview.show()?;
+
+    Ok(())
 }

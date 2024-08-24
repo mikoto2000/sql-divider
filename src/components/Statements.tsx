@@ -38,6 +38,7 @@ export const Statements: React.FC<StatementsProps> = ({
                     try {
                       const [columns, row] = await service.query(replaceParameters(sql, parameterPattern, parameters));
                       onStatementClick(columns, row);
+                      service.openNewStatementWindow(parameterPattern, parameters, [sql], columns, row)
                     } catch (e) {
                       console.log(e);
                       onError(e as string);

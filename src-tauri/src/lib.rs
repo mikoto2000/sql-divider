@@ -35,6 +35,7 @@ pub async fn run() {
             command::close_command,
             command::query_command,
             command::find_select_statement_command,
+            command::open_new_statement_window_command,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

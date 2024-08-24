@@ -1,9 +1,10 @@
-import { Column, ConnectInfo, QueryResult } from "../types";
+import { Column, ConnectInfo, Parameter, ParameterPattern, QueryResult } from "../types";
 
 export interface Service {
   connect(connectInfo: ConnectInfo): Promise<void>;
   close(): Promise<void>;
   query(query: string): Promise<[Column[], QueryResult]>;
-  find_select_statement(query: string): Promise<string[]>;
+  findSelectStatement(query: string): Promise<string[]>;
+  openNewStatementWindow(parameterPattern: ParameterPattern, parameters: Parameter[], selectStatements: string[], columns: Column[], queryResult: QueryResult): Promise<void>;
 }
 
