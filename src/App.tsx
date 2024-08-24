@@ -3,7 +3,7 @@ import notice from "../NOTICE.md?raw";
 
 import { AppBar, Box, Button, Dialog, DialogContent, Divider, Stack, TextField, Typography } from "@mui/material";
 import Tooltip from '@mui/material/Tooltip';
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Column, ConnectInfo, Parameter, ParameterPattern, QueryResult } from "./types";
 import { Service } from "./services/Service";
 import { TauriService } from "./services/TauriService";
@@ -18,16 +18,18 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { Statements } from "./components/Statements";
 import { replaceParameters } from "./utils";
 import { QueryResultView } from "./components/QueryResultView";
+import { Store } from "@tauri-apps/plugin-store";
 
 
 type ConnectStatus = "disconnect" | "connect" | "connecting";
 
 function App() {
 
+  const store = new Store("store.dat");
   const service: Service = new TauriService();
 
   const [showConnectInfo, setShowConnectInfo] = useState<boolean>(true);
-  const [connectInfo, setConnectInfo] = useState<ConnectInfo>({ url: "localhost:5432", db: "postgres", user: "postgres", password: "postgres" });
+  const [connectInfo, setConnectInfo] = useState<ConnectInfo>({ url: "", db: "", user: "", password: "" });
   const [connectStatus, setConnectStatus] = useState<ConnectStatus>("disconnect");
   const [connectionError, setConnectionError] = useState<string>("");
 
@@ -49,6 +51,15 @@ function App() {
   const [error, setError] = useState<string>("");
 
   const [showNoticeDialog, setShowNoticeDialog] = useState<boolean>(false);
+
+  useEffect(() => {
+    (async () => {
+      const initial_connectInfo = await store.get<ConnectInfo>("connectInfo");
+      if (initial_connectInfo) {
+        setConnectInfo(initial_connectInfo);
+      }
+    })()
+  });
 
   return (
     <>
@@ -96,7 +107,7 @@ function App() {
             />
             <TextField
               label="データベース名"
-              placeholder="postgres"
+              placeholder="public"
               fullWidth
               disabled={connectStatus === "connect"}
               InputProps={{
@@ -168,6 +179,7 @@ function App() {
                         await service.connect(connectInfo);
                         setConnectStatus("connect");
                         setShowConnectInfo(false);
+                        store.set("connectInfo", connectInfo);
                       } catch (e) {
                         setConnectionError(e as string);
                         setConnectStatus("disconnect");

@@ -27,6 +27,7 @@ pub async fn run() {
             });
             Ok(())
         })
+        .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![

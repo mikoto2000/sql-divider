@@ -67,3 +67,10 @@ npm i @mui/icons-material
 npm add @tauri-apps/plugin-window-state
 cargo add tauri-plugin-window-state
 ```
+
+## 接続情報保存のためのプラグイン追加
+
+```sh
+npm add @tauri-apps/plugin-store
+cargo add tauri-plugin-store
+```
