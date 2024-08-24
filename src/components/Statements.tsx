@@ -19,6 +19,7 @@ export const Statements: React.FC<StatementsProps> = ({
   parameterPattern,
   parameters,
   selectStatements,
+  onStatementClick,
   onError,
 }) => {
 
@@ -35,7 +36,8 @@ export const Statements: React.FC<StatementsProps> = ({
                   return <Link key={i} onClick={async () => {
                     onError("");
                     try {
-                      return await service.query(replaceParameters(sql, parameterPattern, parameters));
+                      const [columns, row] = await service.query(replaceParameters(sql, parameterPattern, parameters));
+                      onStatementClick(columns, row);
                     } catch (e) {
                       console.log(e);
                       onError(e as string);
