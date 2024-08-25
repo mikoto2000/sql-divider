@@ -7,6 +7,8 @@ import { Column, Parameter, ParameterPattern, QueryResult } from "../types";
 import { QueryResultView } from "../components/QueryResultView";
 import { Divider } from "@mui/material";
 
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
+
 type StatementPageProps = {
 };
 
@@ -23,9 +25,8 @@ export const StatementPage: React.FC<StatementPageProps> = ({ }) => {
 
   useEffect(() => {
     if (!initialized) {
-      listen("data", (event) => {
-        console.log(event);
-        const [parameterPattern, parameters, selectStatements, columns, queryResult ] = event.payload as any;
+      getCurrentWebviewWindow().listen("data", (event) => {
+        const [parameterPattern, parameters, selectStatements, columns, queryResult] = event.payload as any;
         setParameterPattern(parameterPattern);
         setParameters(parameters);
         setSelectStatements(selectStatements);
@@ -33,6 +34,7 @@ export const StatementPage: React.FC<StatementPageProps> = ({ }) => {
         setQueryResult(queryResult);
       });
       emit("done", {});
+      initialized = true;
     }
   }, []);
 

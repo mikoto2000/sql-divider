@@ -83,16 +83,20 @@ pub async fn open_new_statement_window_command(
 ) -> Result<(), tauri::Error> {
     println!("open_new_statement_window_command!");
 
-    let builder =
-        WebviewWindowBuilder::new(&app, "select_md5", tauri::WebviewUrl::App("statement.html".into()));
+    let md5 = md5::compute(select_statements[0].clone());
+    let window_label = format!("select_{:x}", md5);
 
-    let new_webview = builder.title("new").build()?;
+    let builder = WebviewWindowBuilder::new(
+        &app,
+        &window_label,
+        tauri::WebviewUrl::App("statement.html".into()),
+    );
 
-    new_webview.once("done", move |event| {
-        println!("KITAYO");
-        println!("{:?}", event);
+    let new_webview = builder.title(select_statements[0].clone()).build()?;
+
+    new_webview.once("done", move |_| {
         app.emit_to(
-            "select_md5",
+            window_label,
             "data",
             (
                 parameter_pattern,
@@ -101,7 +105,8 @@ pub async fn open_new_statement_window_command(
                 columns,
                 query_result,
             ),
-        ).unwrap();
+        )
+        .expect("emit_to error.");
     });
 
     new_webview.show()?;

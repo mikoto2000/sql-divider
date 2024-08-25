@@ -25,4 +25,5 @@ dotenv = "0.15.0"
 sqlparser = "0.50.0"
 tauri-plugin-window-state = "2.0.0-rc"
 tauri-plugin-store = "2.0.0-rc.2"
+md5 = "0.7.0"
 

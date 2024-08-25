@@ -74,3 +74,9 @@ cargo add tauri-plugin-window-state
 npm add @tauri-apps/plugin-store
 cargo add tauri-plugin-store
 ```
+
+## ウィンドウラベル作成のためのライブラリ追加
+
+```sh
+cargo add md5
+```
