@@ -4,6 +4,12 @@ SQL のサブクエリを抽出し、それぞれの部分ごとにクエリの�
 
 ![image](https://github.com/user-attachments/assets/e5e9cf25-1331-44cc-816d-32aed4e6e69e)
 
+# Usage:
+
+TODO:
+
+直感で操作してください。
+
 # Limitation:
 
 IN の後、 EXISTS の後の SELECT が取得できない。
