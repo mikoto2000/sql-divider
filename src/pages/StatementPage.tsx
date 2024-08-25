@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Statements } from "../components/Statements";
 import { Service } from "../services/Service";
 import { TauriService } from "../services/TauriService";
-import { emit, listen } from "@tauri-apps/api/event";
+import { emit } from "@tauri-apps/api/event";
 import { Column, Parameter, ParameterPattern, QueryResult } from "../types";
 import { QueryResultView } from "../components/QueryResultView";
 import { Divider } from "@mui/material";
@@ -19,7 +19,7 @@ export const StatementPage: React.FC<StatementPageProps> = ({ }) => {
 
   const [parameterPattern, setParameterPattern] = useState<ParameterPattern>("jpa");
   const [parameters, setParameters] = useState<Parameter[]>([]);
-  const [selectStatements, setSelectStatements] = useState<String[]>([]);
+  const [selectStatements, setSelectStatements] = useState<string[]>([]);
   const [columns, setColumns] = useState<Column[]>([]);
   const [queryResult, setQueryResult] = useState<QueryResult>([]);
 
