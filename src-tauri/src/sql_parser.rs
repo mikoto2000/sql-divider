@@ -321,10 +321,11 @@ fn walk_fetch(fetch: &Fetch) -> Vec<String> {
 }
 
 fn walk_query(query: &Query) -> Vec<String> {
-    let mut select_statements = vec![];
+    let mut select_statements: Vec<String> = vec![];
+    let mut withs: Vec<String> = vec![];
 
     if let Some(with) = &query.with {
-        select_statements.extend(walk_with(&with));
+        withs.extend(walk_with(&with));
     }
 
     select_statements.extend(walk_setexpr(&query.body));
@@ -349,7 +350,21 @@ fn walk_query(query: &Query) -> Vec<String> {
         select_statements.extend(walk_fetch(&fetch));
     }
 
-    select_statements
+    // 全 SELECT に WITH を付けて回る
+    let select_statements: Vec<String> = select_statements
+        .into_iter()
+        .map(move |select| {
+            let mut select = select.clone();
+            if let Some(w) = &query.with {
+                select = (w.to_string() + " " + &select).to_string();
+            }
+            return select;
+        })
+        .collect();
+
+    // WITH で抽出したSELECT を先頭に
+    withs.extend(select_statements);
+    withs
 }
 
 fn walk_list_agg_on_overflow(list_agg_on_overflow: &ListAggOnOverflow) -> Vec<String> {
@@ -1129,7 +1144,6 @@ fn walk_join_operator(join_operator: &JoinOperator) -> Vec<String> {
         }
     }
 }
-
 
 fn walk_join(join: &Join) -> Vec<String> {
     let mut select_statements = vec![];
