@@ -26,7 +26,7 @@ pub async fn find_select_statement(sql: &String) -> Result<Vec<String>, ParserEr
 }
 
 fn walk_statement(statement: &Statement) -> Vec<String> {
-    println!("{:?}", statement);
+    //println!("{:?}", statement);
     match statement {
         Statement::Query(query) => {
             return walk_query(query);
@@ -611,7 +611,6 @@ fn walk_expr(expr: &Expr) -> Vec<String> {
             select_statements
         }
         Expr::BinaryOp { left, right, .. } => {
-            println!("kitayo");
             let mut select_statements = vec![];
 
             select_statements.extend(walk_expr(&left));
@@ -718,7 +717,6 @@ fn walk_expr(expr: &Expr) -> Vec<String> {
 
             select_statements.extend(walk_expr(&expr));
 
-            println!("{:?}", r#in);
             select_statements.extend(walk_expr(&r#in));
 
             select_statements
@@ -1108,7 +1106,6 @@ fn walk_table_factor(table_factor: &TableFactor) -> Vec<String> {
 }
 
 fn walk_join_operator(join_operator: &JoinOperator) -> Vec<String> {
-            println!("{}", "kitayo2");
     match join_operator {
         JoinOperator::Inner(join_constraint) => {
             return walk_join_constraint(join_constraint);
