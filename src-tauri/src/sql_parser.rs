@@ -327,6 +327,12 @@ fn walk_query(query: &Query) -> Vec<String> {
 
     if let Some(with) = &query.with {
         withs.extend(walk_with(&with));
+        println!("{}", with.to_string());
+        withs = withs
+            .into_iter()
+            .map(|w| { format!("{} {}", with.to_string(), w)})
+            .collect();
+        println!("{:?}", withs);
     }
 
     select_statements.extend(walk_setexpr(&query.body));
