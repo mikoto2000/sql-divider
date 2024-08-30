@@ -48,6 +48,7 @@ function App() {
   const [columns, setColumns] = useState<Column[]>([]);
   const [queryResult, setQueryResult] = useState<QueryResult>([]);
 
+  const [withStatements, setWithStatements] = useState<string[]>([]);
   const [selectStatements, setSelectStatements] = useState<string[]>([]);
 
   const [error, setError] = useState<string>("");
@@ -241,7 +242,8 @@ function App() {
             onClick={async () => {
               setError("");
               try {
-                const selectStatements = await service.findSelectStatement(sql);
+                const [withStatement, selectStatements] = await service.findSelectStatement(sql);
+                setWithStatements(withStatement);
                 setSelectStatements(selectStatements);
               } catch (e) {
                 console.log(e);
@@ -272,6 +274,7 @@ function App() {
         show={showStatements}
         parameterPattern={parameterPattern}
         parameters={parameters}
+        withStatements={withStatements}
         selectStatements={selectStatements}
         onStatementClick={(_columns, _rows) => {
           setError("");

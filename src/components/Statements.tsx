@@ -8,6 +8,7 @@ type StatementsProps = {
   show: boolean,
   parameterPattern: ParameterPattern,
   parameters: Parameter[],
+  withStatements: string[],
   selectStatements: string[],
   onStatementClick: (columns: Column[], statement: QueryResult) => void,
   onError: (e: unknown) => void,
@@ -18,6 +19,7 @@ export const Statements: React.FC<StatementsProps> = ({
   show,
   parameterPattern,
   parameters,
+  withStatements,
   selectStatements,
   onStatementClick,
   onError,
@@ -36,7 +38,8 @@ export const Statements: React.FC<StatementsProps> = ({
                   return <Link key={i} sx={{ cursor: "pointer" }} onClick={async () => {
                     onError("");
                     try {
-                      const [columns, row] = await service.query(replaceParameters(sql, parameterPattern, parameters));
+                      // with 句を追加する
+                      const [columns, row] = await service.query(replaceParameters(withStatements + " " + sql, parameterPattern, parameters));
                       onStatementClick(columns, row);
                       service.openNewStatementWindow(parameterPattern, parameters, [sql], columns, row)
                     } catch (e) {

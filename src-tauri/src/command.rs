@@ -60,7 +60,7 @@ pub async fn query_command(
 }
 
 #[tauri::command]
-pub async fn find_select_statement_command(query: String) -> Result<Vec<String>, String> {
+pub async fn find_select_statement_command(query: String) -> Result<(Vec<String>, Vec<String>), String> {
     println!("find_select_statement_command!");
     let select_statements = sql_parser::find_select_statement(&query).await;
 

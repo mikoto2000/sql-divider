@@ -12,7 +12,7 @@ export class TauriService implements Service {
   async query(query: string): Promise<[Column[], QueryResult]> {
     return await invoke("query_command", { query })
   }
-  async findSelectStatement(query: string): Promise<string[]> {
+  async findSelectStatement(query: string): Promise<[string[], string[]]> {
     return await invoke("find_select_statement_command", { query })
   }
   async openNewStatementWindow(parameterPattern: ParameterPattern, parameters: Parameter[], selectStatements: string[], columns: Column[], queryResult: QueryResult): Promise<void> {
