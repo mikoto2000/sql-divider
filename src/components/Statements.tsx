@@ -33,7 +33,7 @@ export const Statements: React.FC<StatementsProps> = ({
             <Stack spacing={2}>
               {
                 selectStatements.map((sql, i) => {
-                  return <Link key={i} onClick={async () => {
+                  return <Link key={i} sx={{ cursor: "pointer" }} onClick={async () => {
                     onError("");
                     try {
                       const [columns, row] = await service.query(replaceParameters(sql, parameterPattern, parameters));
