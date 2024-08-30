@@ -1,6 +1,8 @@
 import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import { Column, QueryResult } from "../types";
 
+import ArrowCircleUpIcon from '@mui/icons-material/ArrowCircleUp';
+
 type QueryResultProps = {
   show: boolean,
   columns: Column[],
@@ -36,6 +38,23 @@ export const QueryResultView: React.FC<QueryResultProps> = ({ show, columns, que
           :
           <>結果無し</>
       }
+
+      {/* トップに戻るボタン */}
+      <ArrowCircleUpIcon
+      sx={{
+        position: "fixed",
+        fontSize:"2.5em",
+        right: "0.5em",
+        bottom:"0.5em",
+        cursor: "pointer"
+      }}
+      onClick={() => {
+        window.scroll({
+          top: 0,
+        });
+      }}
+      />
+
     </>
   )
 }
