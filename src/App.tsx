@@ -1,7 +1,7 @@
 import "./App.css";
 import notice from "../NOTICE.md?raw";
 
-import { AppBar, Box, Button, Dialog, DialogContent, Divider, Stack, TextField, Typography } from "@mui/material";
+import { AppBar, Box, Button, CssBaseline, Dialog, DialogContent, Divider, Stack, TextField, Typography } from "@mui/material";
 import Tooltip from '@mui/material/Tooltip';
 import { useEffect, useState } from "react";
 import { Column, ConnectInfo, Parameter, ParameterPattern, QueryResult } from "./types";
@@ -20,6 +20,8 @@ import { replaceParameters } from "./utils";
 import { QueryResultView } from "./components/QueryResultView";
 import { Store } from "@tauri-apps/plugin-store";
 
+import { theme } from "./theme";
+import { ThemeProvider } from "@emotion/react";
 
 type ConnectStatus = "disconnect" | "connect" | "connecting";
 
@@ -62,7 +64,8 @@ function App() {
   }, []);
 
   return (
-    <>
+    <ThemeProvider theme={theme("light")}>
+      <CssBaseline />
       <AppBar position="static">
         <div style={{ display: "flex", flexDirection: "row" }}>
           <div style={{ flexGrow: "1" }}>SQL Divider</div>
@@ -85,7 +88,7 @@ function App() {
         <AccordionSummary
           expandIcon={<ArrowDropDownIcon />}
         >
-          <Typography>{ connectStatus === "connect" ? "接続中: " : "接続情報: " }{`postgres://${connectInfo.user}:****@${connectInfo.url}/${connectInfo.db}`}</Typography>
+          <Typography>{connectStatus === "connect" ? "接続中: " : "接続情報: "}{`postgres://${connectInfo.user}:****@${connectInfo.url}/${connectInfo.db}`}</Typography>
         </AccordionSummary>
         <AccordionDetails>
           <Stack spacing={2}>
@@ -295,7 +298,7 @@ function App() {
           </pre>
         </DialogContent>
       </Dialog>
-    </>
+    </ThemeProvider>
   );
 
 }
