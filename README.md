@@ -12,7 +12,7 @@ TODO:
 
 # Limitation:
 
-IN の後、 EXISTS の後の SELECT が取得できない。
+WITH に複数 SELECT が存在し、後ろの SELECT が前の SELECT を参照する場合、抽出した 2 つめの SELECT の実行に失敗する。
 
 # License:
 
