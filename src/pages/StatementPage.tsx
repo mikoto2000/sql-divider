@@ -45,6 +45,7 @@ export const StatementPage: React.FC<StatementPageProps> = ({ }) => {
         show={true}
         parameterPattern={parameterPattern}
         parameters={parameters}
+        withStatements={[]}
         selectStatements={selectStatements}
         onStatementClick={() => { }}
         onError={() => { }}
