@@ -3395,7 +3395,7 @@ dependencies = [
 
 [[package]]
 name = "sql-divider"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "dotenv",
  "md5",
