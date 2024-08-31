@@ -15,6 +15,8 @@ import AccordionSummary from '@mui/material/AccordionSummary';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import CircularProgress from '@mui/material/CircularProgress';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import { MaterialUISwitch } from "./components/MaterialUISwitch";
+
 import { Statements } from "./components/Statements";
 import { replaceParameters } from "./utils";
 import { QueryResultView } from "./components/QueryResultView";
@@ -29,6 +31,8 @@ function App() {
 
   const store = new Store("store.dat");
   const service: Service = new TauriService();
+
+  const [currentDisplayMode, setCurrentDisplayMode] = useState<"light" | "dark">("light");
 
   const [showConnectInfo, setShowConnectInfo] = useState<boolean>(true);
   const [connectInfo, setConnectInfo] = useState<ConnectInfo>({ url: "", db: "", user: "", password: "" });
@@ -61,21 +65,33 @@ function App() {
       if (initial_connectInfo) {
         setConnectInfo(initial_connectInfo);
       }
+
+      const initial_displayMode = await store.get<"light" | "dark">("displayMode");
+      if (initial_displayMode) {
+        setCurrentDisplayMode(initial_displayMode);
+      }
     })()
   }, []);
 
   return (
-    <ThemeProvider theme={theme("light")}>
+    <ThemeProvider theme={theme(currentDisplayMode)}>
       <CssBaseline />
       <AppBar position="static">
         <div style={{ display: "flex", flexDirection: "row" }}>
           <div style={{ flexGrow: "1" }}>SQL Divider</div>
-          <Tooltip title="ライセンス情報">
-            <div
-              style={{ flexGrow: "0" }}
-              onClick={() => setShowNoticeDialog(true)}
-            >
-              <InfoOutlinedIcon style={{ cursor: 'pointer' }} /></div>
+          <MaterialUISwitch
+            style={{ flexGrow: "0" }}
+            checked={currentDisplayMode === 'light' ? false : true}
+            onChange={(event) => {
+              console.log(event);
+              const mode = event.currentTarget.checked ? 'dark' : 'light';
+              console.log(mode);
+              setCurrentDisplayMode(mode);
+              store.set("displayMode", mode);
+            }}
+          />
+          <Tooltip title="ライセンス情報" style={{ flexGrow: "0" }}>
+            <InfoOutlinedIcon fontSize="large" onClick={() => setShowNoticeDialog(true)} style={{ cursor: 'pointer' }} />
           </Tooltip>
         </div>
       </AppBar>
