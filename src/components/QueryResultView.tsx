@@ -41,18 +41,19 @@ export const QueryResultView: React.FC<QueryResultProps> = ({ show, columns, que
 
       {/* トップに戻るボタン */}
       <ArrowCircleUpIcon
-      sx={{
-        position: "fixed",
-        fontSize:"2.5em",
-        right: "0.5em",
-        bottom:"0.5em",
-        cursor: "pointer"
-      }}
-      onClick={() => {
-        window.scroll({
-          top: 0,
-        });
-      }}
+        color="secondary"
+        sx={{
+          position: "fixed",
+          fontSize: "2.5em",
+          right: "0.5em",
+          bottom: "0.5em",
+          cursor: "pointer"
+        }}
+        onClick={() => {
+          window.scroll({
+            top: 0,
+          });
+        }}
       />
 
     </>
