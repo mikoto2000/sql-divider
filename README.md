@@ -12,7 +12,9 @@ TODO:
 
 # Limitation:
 
-WITH に複数 SELECT が存在し、後ろの SELECT が前の SELECT を参照する場合、抽出した 2 つめの SELECT の実行に失敗する。
+JSON 型や位置型など、所々取得できないカラム型があります。
+「この型が取得できない」等、 issue にあげていただけると幸いです。
+
 
 # License:
 
