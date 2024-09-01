@@ -12,7 +12,7 @@ use sqlx::TypeInfo;
 
 use tokio::sync::Mutex;
 
-pub async fn create_connection_pool(
+pub async fn create_mysql_connection_pool(
     url: String,
     db: String,
     user: String,
@@ -33,7 +33,7 @@ pub async fn create_connection_pool(
     Ok(result)
 }
 
-pub async fn close_connection_pool(
+pub async fn close_mysql_connection_pool(
     pool: Arc<Mutex<Option<Pool<MySql>>>>,
 ) -> Result<(), String> {
 
@@ -44,7 +44,7 @@ pub async fn close_connection_pool(
     Ok(())
 }
 
-pub async fn query(
+pub async fn query_to_mysql(
     pool: &Arc<Mutex<Option<Pool<MySql>>>>,
     query: String,
 ) -> Result<(Vec<crate::model::Column>, Vec<HashMap<String, String>>), Error> {
@@ -71,7 +71,7 @@ pub async fn query(
 
                     map.insert(column.name().to_string(), value.to_string());
                 }
-                "NUMERIC" => {
+                "DECIMAL" => {
                     let value: BigDecimal = row.try_get(column.ordinal()).unwrap();
 
                     map.insert(column.name().to_string(), value.to_string());
@@ -86,17 +86,17 @@ pub async fn query(
 
                     map.insert(column.name().to_string(), value.to_string());
                 }
-                "INT2" => {
+                "SMALLINT" => {
                     let value: i16 = row.try_get(column.ordinal()).unwrap();
 
                     map.insert(column.name().to_string(), value.to_string());
                 }
-                "INT4" => {
+                "INT" => {
                     let value: i32 = row.try_get(column.ordinal()).unwrap();
 
                     map.insert(column.name().to_string(), value.to_string());
                 }
-                "INT8" => {
+                "BIGINT" => {
                     let value: i64 = row.try_get(column.ordinal()).unwrap();
 
                     map.insert(column.name().to_string(), value.to_string());

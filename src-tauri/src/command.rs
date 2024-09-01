@@ -5,7 +5,7 @@ use tauri::{AppHandle, Emitter, Listener, State};
 
 use crate::{
     model::{Column, Parameter},
-    postgres, sql_parser, AppState,
+    mysql, postgres, sql_parser, AppState,
 };
 
 #[tauri::command]
@@ -24,6 +24,13 @@ pub async fn connect_command(
 
         *state.db_type.lock().await = Some(String::from("postgres"));
         *state.pg_pool.lock().await = Some(pool);
+    } else if db_type == String::from("mysql") {
+        let pool = mysql::create_mysql_connection_pool(url, db, user, password).await?;
+
+        *state.db_type.lock().await = Some(String::from("mysql"));
+        *state.mysql_pool.lock().await = Some(pool);
+    } else {
+        return Err(String::from("Unknown db_type."));
     }
 
     Ok(())
@@ -42,6 +49,14 @@ pub async fn close_command(state: State<'_, AppState>) -> Result<(), String> {
             postgres::close_postgres_connection_pool(pool).await?;
 
             *state.pg_pool.lock().await = None;
+        } else if db_type == &String::from("mysql") {
+            let pool = state.mysql_pool.clone();
+
+            mysql::close_mysql_connection_pool(pool).await?;
+
+            *state.mysql_pool.lock().await = None;
+        } else {
+            return Err(String::from("Unknown db_type."));
         }
     }
 
@@ -69,9 +84,20 @@ pub async fn query_command(
                 Err(e) => return Err(e.to_string()),
             };
             return Ok(result);
-        }
+        } else if db_type == &String::from("mysql") {
+            let state = state.clone();
+            let pool = state.mysql_pool.clone();
 
-        return Err(String::from("Unknown database type"))
+            let result = mysql::query_to_mysql(&pool, query).await;
+
+            let result = match result {
+                Ok(r) => r,
+                Err(e) => return Err(e.to_string()),
+            };
+            return Ok(result);
+        } else {
+            return Err(String::from("Unknown database type"));
+        }
     }
 
     Err(String::from("Unknown database type"))
@@ -79,10 +105,21 @@ pub async fn query_command(
 
 #[tauri::command]
 pub async fn find_select_statement_command(
+    state: State<'_, AppState>,
     query: String,
 ) -> Result<(Vec<String>, Vec<String>), String> {
     println!("find_select_statement_command!");
-    let select_statements = sql_parser::find_select_statement(&query).await;
+
+    let state = state.clone();
+    let db_type = state.db_type.lock().await.clone();
+
+    let select_statements = if db_type == Some(String::from("postgres")) {
+        sql_parser::find_postgres_select_statement(&query).await
+    } else if db_type == Some(String::from("mysql")) {
+        sql_parser::find_mysql_select_statement(&query).await
+    } else {
+        return Err(String::from("Unknown db_type."));
+    };
 
     let result = match select_statements {
         Ok(r) => r,

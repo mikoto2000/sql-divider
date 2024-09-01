@@ -117,7 +117,7 @@ function App() {
               }}
             >
               <FormControlLabel value="postgres" control={<Radio />} label="postgres" />
-              <FormControlLabel value="mysql" control={<Radio />} label="mysql" />
+              <FormControlLabel value="mysql" control={<Radio />} label="mysql(alpha)" />
             </RadioGroup>
             <TextField
               label="サーバーアドレス"

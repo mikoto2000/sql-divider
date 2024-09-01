@@ -9,11 +9,11 @@ use sqlparser::{
         TableFactor, TableFunctionArgs, TableVersion, TableWithJoins, Top, TopQuantity, WindowSpec,
         WindowType, With, WithFill,
     },
-    dialect::PostgreSqlDialect,
+    dialect::{MySqlDialect, PostgreSqlDialect},
     parser::{Parser, ParserError},
 };
 
-pub async fn find_select_statement(
+pub async fn find_postgres_select_statement(
     sql: &String,
 ) -> Result<(Vec<String>, Vec<String>), ParserError> {
     let dialect = PostgreSqlDialect {};
@@ -28,6 +28,23 @@ pub async fn find_select_statement(
     }
     return Ok(select_statements);
 }
+
+pub async fn find_mysql_select_statement(
+    sql: &String,
+) -> Result<(Vec<String>, Vec<String>), ParserError> {
+    let dialect = MySqlDialect {};
+
+    let ast = Parser::parse_sql(&dialect, &sql)?;
+
+    let mut select_statements: (Vec<String>, Vec<String>) = (vec![], vec![]);
+    for statement in ast.iter() {
+        let (with, select) = walk_statement(statement);
+        select_statements.0.extend(with);
+        select_statements.1.extend(select);
+    }
+    return Ok(select_statements);
+}
+
 
 fn walk_statement(statement: &Statement) -> (Vec<String>, Vec<String>) {
     //println!("{:?}", statement);

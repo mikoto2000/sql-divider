@@ -1,5 +1,6 @@
 volumes:
   postgres-data:
+  mysql-data:
 
 services:
   app:
@@ -9,13 +10,21 @@ services:
     env_file:
         - .env
     command: sleep infinity
-    network_mode: service:db
-  db:
-    image: postgres:14.1
+  postgres:
+    image: postgres:14
     restart: unless-stopped
     volumes:
       - postgres-data:/var/lib/postgresql/data
     ports:
       - "0.0.0.0:5432:5432"
+    env_file:
+        - .env
+  mysql:
+    image: mysql:9
+    restart: unless-stopped
+    volumes:
+      - mysql-data:/var/lib/mysql
+    ports:
+      - "0.0.0.0:3306:3306"
     env_file:
         - .env
