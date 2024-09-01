@@ -4,14 +4,14 @@ use tauri::webview::WebviewWindowBuilder;
 use tauri::{AppHandle, Emitter, Listener, State};
 
 use crate::{
-    database,
     model::{Column, Parameter},
-    sql_parser, AppState,
+    postgres, sql_parser, AppState,
 };
 
 #[tauri::command]
 pub async fn connect_command(
     state: State<'_, AppState>,
+    db_type: String,
     url: String,
     db: String,
     user: String,
@@ -19,9 +19,12 @@ pub async fn connect_command(
 ) -> Result<(), String> {
     println!("connect_command!");
 
-    let pool = database::create_connection_pool(url, db, user, password).await?;
+    if db_type == String::from("postgres") {
+        let pool = postgres::create_postgres_connection_pool(url, db, user, password).await?;
 
-    *state.pool.lock().await = Some(pool);
+        *state.db_type.lock().await = Some(String::from("postgres"));
+        *state.pg_pool.lock().await = Some(pool);
+    }
 
     Ok(())
 }
@@ -29,13 +32,18 @@ pub async fn connect_command(
 #[tauri::command]
 pub async fn close_command(state: State<'_, AppState>) -> Result<(), String> {
     println!("close_command!");
-
     let state = state.clone();
-    let pool = state.pool.clone();
+    let db_type = state.db_type.lock().await.clone();
 
-    database::close_connection_pool(pool).await?;
+    if let Some(db_type) = &db_type {
+        if db_type == &String::from("postgres") {
+            let pool = state.pg_pool.clone();
 
-    *state.pool.lock().await = None;
+            postgres::close_postgres_connection_pool(pool).await?;
+
+            *state.pg_pool.lock().await = None;
+        }
+    }
 
     Ok(())
 }
@@ -47,20 +55,32 @@ pub async fn query_command(
 ) -> Result<(Vec<Column>, Vec<HashMap<String, String>>), String> {
     println!("query_command!");
     let state = state.clone();
-    let pool = state.pool.clone();
+    let db_type = state.db_type.lock().await.clone();
 
-    let result = database::query(&pool, query).await;
+    if let Some(db_type) = &db_type {
+        if db_type == &String::from("postgres") {
+            let state = state.clone();
+            let pool = state.pg_pool.clone();
 
-    let result = match result {
-        Ok(r) => r,
-        Err(e) => return Err(e.to_string()),
-    };
+            let result = postgres::query_to_postgres(&pool, query).await;
 
-    Ok(result)
+            let result = match result {
+                Ok(r) => r,
+                Err(e) => return Err(e.to_string()),
+            };
+            return Ok(result);
+        }
+
+        return Err(String::from("Unknown database type"))
+    }
+
+    Err(String::from("Unknown database type"))
 }
 
 #[tauri::command]
-pub async fn find_select_statement_command(query: String) -> Result<(Vec<String>, Vec<String>), String> {
+pub async fn find_select_statement_command(
+    query: String,
+) -> Result<(Vec<String>, Vec<String>), String> {
     println!("find_select_statement_command!");
     let select_statements = sql_parser::find_select_statement(&query).await;
 

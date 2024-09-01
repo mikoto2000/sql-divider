@@ -1,4 +1,7 @@
+export type DbType = "postgres" | "mysql";
+
 export type ConnectInfo = {
+  dbType: DbType,
   url: string,
   db: string,
   user: string,

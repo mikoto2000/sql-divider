@@ -2,18 +2,21 @@ use std::{env, sync::Arc};
 
 use dotenv::dotenv;
 
-use sqlx::{Pool, Postgres};
+use sqlx::{MySql, Pool, Postgres};
 
 use tauri::Manager;
 use tokio::sync::Mutex;
 
 mod command;
-mod database;
 mod model;
+mod mysql;
+mod postgres;
 mod sql_parser;
 
 pub struct AppState {
-    pub pool: Arc<Mutex<Option<Pool<Postgres>>>>,
+    pub db_type: Arc<Mutex<Option<String>>>,
+    pub pg_pool: Arc<Mutex<Option<Pool<Postgres>>>>,
+    pub mysql_pool: Arc<Mutex<Option<Pool<MySql>>>>,
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -23,7 +26,9 @@ pub async fn run() {
     tauri::Builder::default()
         .setup(move |app| {
             app.manage(AppState {
-                pool: Arc::new(Mutex::new(None)),
+                db_type: Arc::new(Mutex::new(None)),
+                pg_pool: Arc::new(Mutex::new(None)),
+                mysql_pool: Arc::new(Mutex::new(None)),
             });
             Ok(())
         })

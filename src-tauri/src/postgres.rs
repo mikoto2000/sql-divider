@@ -10,7 +10,7 @@ use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
 use tokio::sync::Mutex;
 
-pub async fn create_connection_pool(
+pub async fn create_postgres_connection_pool(
     url: String,
     db: String,
     user: String,
@@ -31,7 +31,7 @@ pub async fn create_connection_pool(
     Ok(result)
 }
 
-pub async fn close_connection_pool(
+pub async fn close_postgres_connection_pool(
     pool: Arc<Mutex<Option<Pool<Postgres>>>>,
 ) -> Result<(), String> {
 
@@ -42,7 +42,7 @@ pub async fn close_connection_pool(
     Ok(())
 }
 
-pub async fn query(
+pub async fn query_to_postgres(
     pool: &Arc<Mutex<Option<Pool<Postgres>>>>,
     query: String,
 ) -> Result<(Vec<crate::model::Column>, Vec<HashMap<String, String>>), Error> {
@@ -139,3 +139,4 @@ pub async fn query(
 
     Ok((columns, result))
 }
+

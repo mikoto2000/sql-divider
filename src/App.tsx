@@ -1,10 +1,10 @@
 import "./App.css";
 import notice from "../NOTICE.md?raw";
 
-import { AppBar, Box, Button, CssBaseline, Dialog, DialogContent, Divider, Stack, TextField, Typography } from "@mui/material";
+import { AppBar, Box, Button, CssBaseline, Dialog, DialogContent, Divider, FormControlLabel, Radio, RadioGroup, Stack, TextField, Typography } from "@mui/material";
 import Tooltip from '@mui/material/Tooltip';
 import { useEffect, useState } from "react";
-import { Column, ConnectInfo, Parameter, ParameterPattern, QueryResult } from "./types";
+import { Column, ConnectInfo, DbType, Parameter, ParameterPattern, QueryResult } from "./types";
 import { Service } from "./services/Service";
 import { TauriService } from "./services/TauriService";
 import { Parameters } from "./components/Parameters";
@@ -35,7 +35,7 @@ function App() {
   const [currentDisplayMode, setCurrentDisplayMode] = useState<"light" | "dark">("light");
 
   const [showConnectInfo, setShowConnectInfo] = useState<boolean>(true);
-  const [connectInfo, setConnectInfo] = useState<ConnectInfo>({ url: "", db: "", user: "", password: "" });
+  const [connectInfo, setConnectInfo] = useState<ConnectInfo>({ dbType: "postgres", url: "", db: "", user: "", password: "" });
   const [connectStatus, setConnectStatus] = useState<ConnectStatus>("disconnect");
   const [connectionError, setConnectionError] = useState<string>("");
 
@@ -105,10 +105,20 @@ function App() {
         <AccordionSummary
           expandIcon={<ArrowDropDownIcon />}
         >
-          <Typography>{connectStatus === "connect" ? "接続中: " : "接続情報: "}{`postgres://${connectInfo.user}:****@${connectInfo.url}/${connectInfo.db}`}</Typography>
+          <Typography>{connectStatus === "connect" ? "接続中: " : "接続情報: "}{`${connectInfo.dbType}://${connectInfo.user}:****@${connectInfo.url}/${connectInfo.db}`}</Typography>
         </AccordionSummary>
         <AccordionDetails>
           <Stack spacing={2}>
+            <RadioGroup
+              row
+              value={connectInfo.dbType}
+              onChange={(event) => {
+                setConnectInfo({ ...connectInfo, dbType: event.currentTarget.value as DbType });
+              }}
+            >
+              <FormControlLabel value="postgres" control={<Radio />} label="postgres" />
+              <FormControlLabel value="mysql" control={<Radio />} label="mysql" />
+            </RadioGroup>
             <TextField
               label="サーバーアドレス"
               placeholder="localhost:5432"
