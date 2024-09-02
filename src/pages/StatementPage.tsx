@@ -5,17 +5,23 @@ import { TauriService } from "../services/TauriService";
 import { emit } from "@tauri-apps/api/event";
 import { Column, Parameter, ParameterPattern, QueryResult } from "../types";
 import { QueryResultView } from "../components/QueryResultView";
-import { Divider } from "@mui/material";
+import { CssBaseline, Divider, ThemeProvider } from "@mui/material";
 
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
+import { Store } from "@tauri-apps/plugin-store";
+
+import { theme } from "../theme";
 
 type StatementPageProps = {
 };
 
 export const StatementPage: React.FC<StatementPageProps> = ({ }) => {
 
+  const store = new Store("store.dat");
   const service: Service = new TauriService();
   let initialized = false;
+
+  const [currentDisplayMode, setCurrentDisplayMode] = useState<"light" | "dark">("light");
 
   const [parameterPattern, setParameterPattern] = useState<ParameterPattern>("jpa");
   const [parameters, setParameters] = useState<Parameter[]>([]);
@@ -36,10 +42,19 @@ export const StatementPage: React.FC<StatementPageProps> = ({ }) => {
       emit("done", {});
       initialized = true;
     }
+
+    (async () => {
+      const initial_displayMode = await store.get<"light" | "dark">("displayMode");
+      if (initial_displayMode) {
+        setCurrentDisplayMode(initial_displayMode);
+      }
+    })()
+
   }, []);
 
   return (
-    <>
+    <ThemeProvider theme={theme(currentDisplayMode)}>
+      <CssBaseline />
       <Statements
         service={service}
         show={true}
@@ -56,6 +71,6 @@ export const StatementPage: React.FC<StatementPageProps> = ({ }) => {
         columns={columns}
         queryResult={queryResult}
       />
-    </>
+    </ThemeProvider>
   )
 }
