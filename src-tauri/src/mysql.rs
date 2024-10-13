@@ -62,64 +62,112 @@ pub async fn query_to_mysql(
             let type_name = type_info.name();
             match type_name {
                 "FLOAT4" => {
-                    let value: f32 = row.try_get(column.ordinal()).unwrap();
+                    let value: Result<f32, _> = row.try_get(column.ordinal());
 
-                    map.insert(column.name().to_string(), value.to_string());
+                    if value.is_ok() {
+                        map.insert(column.name().to_string(), value.unwrap().to_string());
+                    } else {
+                        map.insert(column.name().to_string(), "NULL".to_string());
+                    }
                 }
                 "FLOAT8" => {
-                    let value: f64 = row.try_get(column.ordinal()).unwrap();
+                    let value: Result<f64, _> = row.try_get(column.ordinal());
 
-                    map.insert(column.name().to_string(), value.to_string());
+                    if value.is_ok() {
+                        map.insert(column.name().to_string(), value.unwrap().to_string());
+                    } else {
+                        map.insert(column.name().to_string(), "NULL".to_string());
+                    }
                 }
                 "DECIMAL" => {
-                    let value: BigDecimal = row.try_get(column.ordinal()).unwrap();
+                    let value: Result<BigDecimal, _> = row.try_get(column.ordinal());
 
-                    map.insert(column.name().to_string(), value.to_string());
+                    if value.is_ok() {
+                        map.insert(column.name().to_string(), value.unwrap().to_string());
+                    } else {
+                        map.insert(column.name().to_string(), "NULL".to_string());
+                    }
                 }
                 "BOOL" => {
-                    let value: bool = row.try_get(column.ordinal()).unwrap();
+                    let value: Result<bool, _> = row.try_get(column.ordinal());
 
-                    map.insert(column.name().to_string(), value.to_string());
+                    if value.is_ok() {
+                        map.insert(column.name().to_string(), value.unwrap().to_string());
+                    } else {
+                        map.insert(column.name().to_string(), "NULL".to_string());
+                    }
                 }
                 "INT1" => {
-                    let value: i8 = row.try_get(column.ordinal()).unwrap();
+                    let value: Result<i8, _> = row.try_get(column.ordinal());
 
-                    map.insert(column.name().to_string(), value.to_string());
+                    if value.is_ok() {
+                        map.insert(column.name().to_string(), value.unwrap().to_string());
+                    } else {
+                        map.insert(column.name().to_string(), "NULL".to_string());
+                    }
                 }
                 "SMALLINT" => {
-                    let value: i16 = row.try_get(column.ordinal()).unwrap();
+                    let value: Result<i16, _> = row.try_get(column.ordinal());
 
-                    map.insert(column.name().to_string(), value.to_string());
+                    if value.is_ok() {
+                        map.insert(column.name().to_string(), value.unwrap().to_string());
+                    } else {
+                        map.insert(column.name().to_string(), "NULL".to_string());
+                    }
                 }
                 "INT" => {
-                    let value: i32 = row.try_get(column.ordinal()).unwrap();
+                    let value: Result<i32, _> = row.try_get(column.ordinal());
 
-                    map.insert(column.name().to_string(), value.to_string());
+                    if value.is_ok() {
+                        map.insert(column.name().to_string(), value.unwrap().to_string());
+                    } else {
+                        map.insert(column.name().to_string(), "NULL".to_string());
+                    }
                 }
                 "BIGINT" => {
-                    let value: i64 = row.try_get(column.ordinal()).unwrap();
+                    let value: Result<i64, _> = row.try_get(column.ordinal());
 
-                    map.insert(column.name().to_string(), value.to_string());
+                    if value.is_ok() {
+                        map.insert(column.name().to_string(), value.unwrap().to_string());
+                    } else {
+                        map.insert(column.name().to_string(), "NULL".to_string());
+                    }
                 }
                 "CHAR" => {
-                    let value: String = row.try_get(column.ordinal()).unwrap();
+                    let value: Result<String, _> = row.try_get(column.ordinal());
 
-                    map.insert(column.name().to_string(), value.to_string());
+                    if value.is_ok() {
+                        map.insert(column.name().to_string(), value.unwrap().to_string());
+                    } else {
+                        map.insert(column.name().to_string(), "NULL".to_string());
+                    }
                 }
                 "VARCHAR" => {
-                    let value: String = row.try_get(column.ordinal()).unwrap();
+                    let value: Result<String, _> = row.try_get(column.ordinal());
 
-                    map.insert(column.name().to_string(), value.to_string());
+                    if value.is_ok() {
+                        map.insert(column.name().to_string(), value.unwrap().to_string());
+                    } else {
+                        map.insert(column.name().to_string(), "NULL".to_string());
+                    }
                 }
                 "TEXT" => {
-                    let value: String = row.try_get(column.ordinal()).unwrap();
+                    let value: Result<String, _> = row.try_get(column.ordinal());
 
-                    map.insert(column.name().to_string(), value.to_string());
+                    if value.is_ok() {
+                        map.insert(column.name().to_string(), value.unwrap().to_string());
+                    } else {
+                        map.insert(column.name().to_string(), "NULL".to_string());
+                    }
                 }
                 "DATE" => {
-                    let value: NaiveDate = row.try_get(column.ordinal()).unwrap();
+                    let value: Result<NaiveDate, _> = row.try_get(column.ordinal());
 
-                    map.insert(column.name().to_string(), value.to_string());
+                    if value.is_ok() {
+                        map.insert(column.name().to_string(), value.unwrap().to_string());
+                    } else {
+                        map.insert(column.name().to_string(), "NULL".to_string());
+                    }
                 }
                 _ => {
                     println!("{}", type_name);
