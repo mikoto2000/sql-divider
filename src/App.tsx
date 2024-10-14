@@ -281,6 +281,8 @@ function App() {
             SELECT 文抽出
           </Button>
         </Box>
+        <Typography>Replaced SQL:</Typography>
+        {replaceParameters(sql, parameterPattern, parameters)}
       </Box >
       <p>{error}</p>
       <Divider sx={{ marginTop: "1em" }} />
