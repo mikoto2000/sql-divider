@@ -8,7 +8,7 @@ import { QueryResultView } from "../components/QueryResultView";
 import { CssBaseline, Divider, ThemeProvider } from "@mui/material";
 
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
-import { Store } from "@tauri-apps/plugin-store";
+import { createStore, Store } from "@tauri-apps/plugin-store";
 
 import { theme } from "../theme";
 
@@ -17,7 +17,7 @@ type StatementPageProps = {
 
 export const StatementPage: React.FC<StatementPageProps> = ({ }) => {
 
-  const store = new Store("store.dat");
+  let store: Store | null = null;
   const service: Service = new TauriService();
   let initialized = false;
 
@@ -44,6 +44,7 @@ export const StatementPage: React.FC<StatementPageProps> = ({ }) => {
     }
 
     (async () => {
+      store = await createStore("store.dat");
       const initial_displayMode = await store.get<"light" | "dark">("displayMode");
       if (initial_displayMode) {
         setCurrentDisplayMode(initial_displayMode);

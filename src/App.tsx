@@ -20,7 +20,7 @@ import { MaterialUISwitch } from "./components/MaterialUISwitch";
 import { Statements } from "./components/Statements";
 import { replaceParameters } from "./utils";
 import { QueryResultView } from "./components/QueryResultView";
-import { Store } from "@tauri-apps/plugin-store";
+import { createStore, Store } from "@tauri-apps/plugin-store";
 
 import { theme } from "./theme";
 import { ThemeProvider } from "@emotion/react";
@@ -29,7 +29,7 @@ type ConnectStatus = "disconnect" | "connect" | "connecting";
 
 function App() {
 
-  const store = new Store("store.dat");
+  let store: Store | null = null;
   const service: Service = new TauriService();
 
   const [currentDisplayMode, setCurrentDisplayMode] = useState<"light" | "dark">("light");
@@ -61,6 +61,7 @@ function App() {
 
   useEffect(() => {
     (async () => {
+      store = await createStore("store.dat");
       const initial_connectInfo = await store.get<ConnectInfo>("connectInfo");
       if (initial_connectInfo) {
         setConnectInfo(initial_connectInfo);
@@ -87,7 +88,9 @@ function App() {
               const mode = event.currentTarget.checked ? 'dark' : 'light';
               console.log(mode);
               setCurrentDisplayMode(mode);
-              store.set("displayMode", mode);
+              if (store) {
+                store.set("displayMode", mode);
+              }
             }}
           />
           <Tooltip title="ライセンス情報" style={{ flexGrow: "0" }}>
@@ -209,7 +212,9 @@ function App() {
                         await service.connect(connectInfo);
                         setConnectStatus("connect");
                         setShowConnectInfo(false);
-                        store.set("connectInfo", connectInfo);
+                        if (store) {
+                          store.set("connectInfo", connectInfo);
+                        }
                       } catch (e) {
                         setConnectionError(e as string);
                         setConnectStatus("disconnect");
