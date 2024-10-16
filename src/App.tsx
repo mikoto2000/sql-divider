@@ -59,6 +59,8 @@ function App() {
 
   const [showNoticeDialog, setShowNoticeDialog] = useState<boolean>(false);
 
+  const replacesSql = replaceParameters(sql, parameterPattern, parameters);
+
   useEffect(() => {
     (async () => {
       store = await createStore("store.dat");
@@ -255,8 +257,7 @@ function App() {
             onClick={async () => {
               setError("");
               try {
-                const [columns, rows] = await service.query(
-                  replaceParameters(sql, parameterPattern, parameters));
+                const [columns, rows] = await service.query(replacesSql);
                 setShowResult(true);
                 setColumns(columns.sort((a, b) => a.ordinal - b.ordinal));
                 setQueryResult(rows);
@@ -287,7 +288,7 @@ function App() {
           </Button>
         </Box>
         <Typography>Replaced SQL:</Typography>
-        {replaceParameters(sql, parameterPattern, parameters)}
+        {replacesSql}
       </Box >
       <p>{error}</p>
       <Divider sx={{ marginTop: "1em" }} />
