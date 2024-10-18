@@ -46,7 +46,7 @@ function App() {
 
   const [parameters, setParameters] = useState<Parameter[]>([{ name: "", value: "" }]);
 
-  const [parameterPattern, setParameterPattern] = useState<ParameterPattern>("jpa");
+  const [parameterPattern, setParameterPattern] = useState<ParameterPattern>("mybatis");
 
 
   const [columns, setColumns] = useState<Column[]>([]);

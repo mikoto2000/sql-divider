@@ -86,7 +86,7 @@ export const Parameters: React.FC<ParametersProps> = ({
           }
         }}
       >
-        {/*<FormControlLabel value="mybatis" control={<Radio disabled />} label="MyBatis(#{name})" />*/}
+        <FormControlLabel value="mybatis" control={<Radio />} label="MyBatis(#{name})" />
         <FormControlLabel value="jpa" control={<Radio />} label="JPA(:name)" />
         <FormControlLabel value="dapper" control={<Radio />} label="Dapper(@name)" />
         <FormControlLabel value="log" control={<Radio />} label="log($N)" />
