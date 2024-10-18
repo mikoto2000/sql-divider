@@ -274,7 +274,7 @@ function App() {
             onClick={async () => {
               setError("");
               try {
-                const [withStatement, selectStatements] = await service.findSelectStatement(sql);
+                const [withStatement, selectStatements] = await service.findSelectStatement(replacesSql);
                 setWithStatements(withStatement);
                 setSelectStatements(selectStatements);
               } catch (e) {
