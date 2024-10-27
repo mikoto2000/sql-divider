@@ -25,6 +25,8 @@ import { createStore, Store } from "@tauri-apps/plugin-store";
 import { theme } from "./theme";
 import { ThemeProvider } from "@emotion/react";
 
+import SqlInput from "./components/SqlInput";
+
 type ConnectStatus = "disconnect" | "connect" | "connecting";
 
 function App() {
@@ -238,58 +240,33 @@ function App() {
           <Box>{connectionError ? `Error: ${connectionError}` : <></>}</Box>
         </AccordionDetails>
       </Accordion>
-      <Box className="sql" sx={{ marginTop: "1em" }}>
-        <TextField
-          fullWidth
-          label="SQL"
-          placeholder="select * from user;"
-          multiline
-          value={sql}
-          onChange={(e) => {
-            setSql(e.target.value);
-          }}
-        >
-        </TextField>
-        <Box className="controls">
-          <Button
-            disabled={!connectStatus}
-            variant="outlined"
-            onClick={async () => {
-              setError("");
-              try {
-                const [columns, rows] = await service.query(replacesSql);
-                setShowResult(true);
-                setColumns(columns.sort((a, b) => a.ordinal - b.ordinal));
-                setQueryResult(rows);
-              } catch (e) {
-                console.log(e);
-                setError(e as string);
-              }
-            }}
-          >
-            SQL 発行
-          </Button>
-          <Button
-            variant="outlined"
-            onClick={async () => {
-              setError("");
-              try {
-                const [withStatement, selectStatements] = await service.findSelectStatement(replacesSql);
-                setWithStatements(withStatement);
-                setSelectStatements(selectStatements);
-              } catch (e) {
-                console.log(e);
-                setError(e as string);
-              }
-              setShowStatements(true)
-            }}
-          >
-            SELECT 文抽出
-          </Button>
-        </Box>
-        <Typography>Replaced SQL:</Typography>
-        {replacesSql}
-      </Box >
+      <SqlInput
+        onSqlChange={(newSql) => setSql(newSql)}
+        onExecuteSql={async () => {
+          setError("");
+          try {
+            const [columns, rows] = await service.query(replacesSql);
+            setShowResult(true);
+            setColumns(columns.sort((a, b) => a.ordinal - b.ordinal));
+            setQueryResult(rows);
+          } catch (e) {
+            console.log(e);
+            setError(e as string);
+          }
+        }}
+        onExtractSelectStatements={async () => {
+          setError("");
+          try {
+            const [withStatement, selectStatements] = await service.findSelectStatement(replacesSql);
+            setWithStatements(withStatement);
+            setSelectStatements(selectStatements);
+          } catch (e) {
+            console.log(e);
+            setError(e as string);
+          }
+          setShowStatements(true)
+        }}
+      />
       <p>{error}</p>
       <Divider sx={{ marginTop: "1em" }} />
       <Parameters
