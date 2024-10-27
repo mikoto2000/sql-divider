@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import { Column, QueryResult } from "../types";
 
@@ -9,9 +10,7 @@ type QueryResultProps = {
   queryResult: QueryResult,
 };
 
-export const QueryResultView: React.FC<QueryResultProps> = ({ show, columns, queryResult }) => {
-
-
+const QueryResultView: React.FC<QueryResultProps> = ({ show, columns, queryResult }) => {
   return (
     <>
       <Typography>Result:</Typography>
@@ -59,3 +58,5 @@ export const QueryResultView: React.FC<QueryResultProps> = ({ show, columns, que
     </>
   )
 }
+
+export default memo(QueryResultView);
