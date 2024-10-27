@@ -1,4 +1,4 @@
-import { memo } from "react";
+import React, { useMemo } from 'react';
 import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import { Column, QueryResult } from "../types";
 
@@ -11,6 +11,9 @@ type QueryResultProps = {
 };
 
 const QueryResultView: React.FC<QueryResultProps> = ({ show, columns, queryResult }) => {
+  const memoizedColumns = useMemo(() => columns, [columns]);
+  const memoizedQueryResult = useMemo(() => queryResult, [queryResult]);
+
   return (
     <>
       <Typography>Result:</Typography>
@@ -21,15 +24,17 @@ const QueryResultView: React.FC<QueryResultProps> = ({ show, columns, queryResul
               <Table>
                 <TableHead>
                   <TableRow>
-                    {columns.map((c) => <TableCell>{c.name}</TableCell>)}
+                    {memoizedColumns.map((c) => <TableCell key={c.name}>{c.name}</TableCell>)}
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {queryResult.map((e => {
-                    return (<TableRow>
-                      {columns.map((c) => <TableCell>{e[c.name]}</TableCell>)}
-                    </TableRow>)
-                  }))}
+                  {memoizedQueryResult.map((e, index) => {
+                    return (
+                      <TableRow key={index}>
+                        {memoizedColumns.map((c) => <TableCell key={c.name}>{e[c.name]}</TableCell>)}
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -56,7 +61,7 @@ const QueryResultView: React.FC<QueryResultProps> = ({ show, columns, queryResul
       />
 
     </>
-  )
-}
+  );
+};
 
-export default memo(QueryResultView);
+export default React.memo(QueryResultView);

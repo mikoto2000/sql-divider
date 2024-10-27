@@ -3,7 +3,7 @@ import notice from "../NOTICE.md?raw";
 
 import { AppBar, Box, Button, CssBaseline, Dialog, DialogContent, Divider, FormControlLabel, Radio, RadioGroup, Stack, TextField, Typography } from "@mui/material";
 import Tooltip from '@mui/material/Tooltip';
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Column, ConnectInfo, DbType, Parameter, ParameterPattern, QueryResult } from "./types";
 import { Service } from "./services/Service";
 import { TauriService } from "./services/TauriService";
@@ -24,8 +24,6 @@ import { createStore, Store } from "@tauri-apps/plugin-store";
 
 import { theme } from "./theme";
 import { ThemeProvider } from "@emotion/react";
-
-import SqlInput from "./components/SqlInput";
 
 type ConnectStatus = "disconnect" | "connect" | "connecting";
 
@@ -76,6 +74,10 @@ function App() {
         setCurrentDisplayMode(initial_displayMode);
       }
     })()
+  }, []);
+
+  const handleStatementClick = useCallback((_columns: Column[], _rows: QueryResult) => {
+    setError("");
   }, []);
 
   return (
@@ -240,33 +242,58 @@ function App() {
           <Box>{connectionError ? `Error: ${connectionError}` : <></>}</Box>
         </AccordionDetails>
       </Accordion>
-      <SqlInput
-        onSqlChange={(newSql) => setSql(newSql)}
-        onExecuteSql={async () => {
-          setError("");
-          try {
-            const [columns, rows] = await service.query(replacesSql);
-            setShowResult(true);
-            setColumns(columns.sort((a, b) => a.ordinal - b.ordinal));
-            setQueryResult(rows);
-          } catch (e) {
-            console.log(e);
-            setError(e as string);
-          }
-        }}
-        onExtractSelectStatements={async () => {
-          setError("");
-          try {
-            const [withStatement, selectStatements] = await service.findSelectStatement(replacesSql);
-            setWithStatements(withStatement);
-            setSelectStatements(selectStatements);
-          } catch (e) {
-            console.log(e);
-            setError(e as string);
-          }
-          setShowStatements(true)
-        }}
-      />
+      <Box className="sql" sx={{ marginTop: "1em" }}>
+        <TextField
+          fullWidth
+          label="SQL"
+          placeholder="select * from user;"
+          multiline
+          value={sql}
+          onChange={(e) => {
+            setSql(e.target.value);
+          }}
+        >
+        </TextField>
+        <Box className="controls">
+          <Button
+            disabled={!connectStatus}
+            variant="outlined"
+            onClick={async () => {
+              setError("");
+              try {
+                const [columns, rows] = await service.query(replacesSql);
+                setShowResult(true);
+                setColumns(columns.sort((a, b) => a.ordinal - b.ordinal));
+                setQueryResult(rows);
+              } catch (e) {
+                console.log(e);
+                setError(e as string);
+              }
+            }}
+          >
+            SQL 発行
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={async () => {
+              setError("");
+              try {
+                const [withStatement, selectStatements] = await service.findSelectStatement(replacesSql);
+                setWithStatements(withStatement);
+                setSelectStatements(selectStatements);
+              } catch (e) {
+                console.log(e);
+                setError(e as string);
+              }
+              setShowStatements(true)
+            }}
+          >
+            SELECT 文抽出
+          </Button>
+        </Box>
+        <Typography>Replaced SQL:</Typography>
+        {replacesSql}
+      </Box >
       <p>{error}</p>
       <Divider sx={{ marginTop: "1em" }} />
       <Parameters
@@ -287,11 +314,7 @@ function App() {
         parameters={parameters}
         withStatements={withStatements}
         selectStatements={selectStatements}
-        onStatementClick={(_columns, _rows) => {
-          setError("");
-          //setColumns(columns.sort((a, b) => a.ordinal - b.ordinal));
-          //setQueryResult(rows);
-        }}
+        onStatementClick={handleStatementClick}
         onError={(e) => {
           setError(e as string);
         }}
